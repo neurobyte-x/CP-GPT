@@ -1,0 +1,41 @@
+[project]
+name = "cp-path-builder"
+version = "1.0.0"
+description = "Structured competitive programming practice platform"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    # ── Core ─────────────────────────────────────────────────────
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.6.0",
+    # ── Database ─────────────────────────────────────────────────
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30.0",
+    "alembic>=1.14.0",
+    "greenlet>=3.1.0",
+    # ── Auth & Security ──────────────────────────────────────────
+    "fastapi-users[sqlalchemy]>=14.0.0",
+    "PyJWT>=2.10.0",
+    "bcrypt>=4.2.0",
+    "python-multipart>=0.0.12",
+    # ── HTTP Client ──────────────────────────────────────────────
+    "httpx>=0.28.0",
+    # ── Redis (optional caching) ────────────────────────────────
+    "redis>=5.2.0",
+    # ── AI / LLM ────────────────────────────────────────────────
+    "google-genai>=1.0.0",
+    # ── Validation ───────────────────────────────────────────────
+    "email-validator>=2.2.0",
+    # ── Env ──────────────────────────────────────────────────────
+    "python-dotenv>=1.0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "httpx",
+    "ruff>=0.8.0",
+]
