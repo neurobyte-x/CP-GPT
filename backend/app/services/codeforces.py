@@ -30,6 +30,11 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
+def _sql_str(value: str) -> str:
+    """Escape a string for safe use in raw SQL VALUES clauses."""
+    return "'" + value.replace("'", "''") + "'"
+
+
 class CodeforcesService:
     """
     Service layer for all Codeforces API interactions.
@@ -119,18 +124,24 @@ class CodeforcesService:
     async def sync_problems(self, db: AsyncSession) -> int:
         """
         Synchronize all Codeforces problems into local database.
-        Uses upsert (INSERT ... ON CONFLICT UPDATE) for idempotency.
+        Uses raw SQL bulk inserts via engine.begin() for reliability over Neon DB.
+        ~11k problems in ~30-60s.
         Returns the number of problems synced.
         """
-        # Create sync log
+        from app.database import engine
+        from sqlalchemy import text
+
+        # Create sync log (via passed db session for audit trail)
         sync_log = CFSyncLog(sync_type="problems", status=SyncStatus.RUNNING)
         db.add(sync_log)
         await db.flush()
+        sync_log_id = sync_log.id
 
         try:
             raw = await self.fetch_all_problems()
             problems_data = raw.get("problems", [])
             statistics_data = raw.get("problemStatistics", [])
+            logger.info(f"Fetched {len(problems_data)} problems from CF API")
 
             # Build solve count lookup
             solve_counts: dict[str, int] = {}
@@ -144,117 +155,150 @@ class CodeforcesService:
                 for tag_name in p.get("tags", []):
                     all_tag_names.add(tag_name)
 
-            # Upsert tags
-            tag_map = await self._upsert_tags(db, all_tag_names)
+            # ── Use engine.begin() for all DB operations ──────────
+            async with engine.begin() as conn:
+                # ── Step 1: Bulk upsert tags ──────────────────────
+                tag_map: dict[str, int] = {}
+                if all_tag_names:
+                    tag_values = ", ".join(
+                        f"({_sql_str(name)}, {_sql_str(self._slugify(name))}, {_sql_str(self._categorize_tag(name))})"
+                        for name in all_tag_names
+                    )
+                    result = await conn.execute(
+                        text(
+                            f"INSERT INTO tags (name, slug, category) VALUES {tag_values} "
+                            f"ON CONFLICT (name) DO UPDATE SET slug = EXCLUDED.slug, category = EXCLUDED.category "
+                            f"RETURNING id, name"
+                        )
+                    )
+                    tag_map = {row.name: row.id for row in result}
+                logger.info(f"Upserted {len(tag_map)} tags")
 
-            # Upsert problems in batches
-            synced = 0
-            batch_size = 500
-            for i in range(0, len(problems_data), batch_size):
-                batch = problems_data[i : i + batch_size]
-                synced += await self._upsert_problem_batch(
-                    db, batch, solve_counts, tag_map
+                # ── Step 2: Bulk upsert problems in batches ────────
+                synced = 0
+                batch_size = 1000
+                problem_id_map: dict[str, int] = {}
+
+                for i in range(0, len(problems_data), batch_size):
+                    batch = problems_data[i : i + batch_size]
+                    rows = []
+                    for p in batch:
+                        contest_id = p.get("contestId")
+                        index = p.get("index")
+                        if not contest_id or not index:
+                            continue
+                        key = f"{contest_id}-{index}"
+                        url = f"https://codeforces.com/problemset/problem/{contest_id}/{index}"
+                        name = p.get("name", "Unknown").replace("'", "''")
+                        rating = p.get("rating")
+                        rating_sql = str(rating) if rating is not None else "NULL"
+                        rows.append(
+                            f"({contest_id}, {_sql_str(index)}, '{name}', {rating_sql}, "
+                            f"{solve_counts.get(key, 0)}, {_sql_str(url)})"
+                        )
+
+                    if rows:
+                        values_sql = ", ".join(rows)
+                        result = await conn.execute(
+                            text(
+                                f"INSERT INTO problems (contest_id, problem_index, name, rating, solved_count, url) "
+                                f"VALUES {values_sql} "
+                                f"ON CONFLICT ON CONSTRAINT uq_problem_contest_index "
+                                f"DO UPDATE SET name = EXCLUDED.name, rating = EXCLUDED.rating, solved_count = EXCLUDED.solved_count "
+                                f"RETURNING id, contest_id, problem_index"
+                            )
+                        )
+                        for row in result:
+                            k = f"{row.contest_id}-{row.problem_index}"
+                            problem_id_map[k] = row.id
+                        synced += len(rows)
+
+                    logger.info(f"Synced {synced}/{len(problems_data)} problems...")
+
+                # ── Step 3: Bulk update tag associations ──────────
+                all_pids = list(problem_id_map.values())
+                if all_pids:
+                    # Delete in chunks to avoid overly long IN clauses
+                    for ci in range(0, len(all_pids), 5000):
+                        chunk = all_pids[ci : ci + 5000]
+                        pids_sql = ", ".join(str(pid) for pid in chunk)
+                        await conn.execute(
+                            text(
+                                f"DELETE FROM problem_tags WHERE problem_id IN ({pids_sql})"
+                            )
+                        )
+
+                # Build and insert tag associations
+                tag_assoc_rows = []
+                for p in problems_data:
+                    contest_id = p.get("contestId")
+                    index = p.get("index")
+                    if not contest_id or not index:
+                        continue
+                    key = f"{contest_id}-{index}"
+                    problem_id = problem_id_map.get(key)
+                    if not problem_id:
+                        continue
+                    for tag_name in p.get("tags", []):
+                        tag_id = tag_map.get(tag_name)
+                        if tag_id:
+                            tag_assoc_rows.append(f"({problem_id}, {tag_id})")
+
+                if tag_assoc_rows:
+                    for ci in range(0, len(tag_assoc_rows), 5000):
+                        chunk = tag_assoc_rows[ci : ci + 5000]
+                        values_sql = ", ".join(chunk)
+                        await conn.execute(
+                            text(
+                                f"INSERT INTO problem_tags (problem_id, tag_id) VALUES {values_sql} "
+                                f"ON CONFLICT DO NOTHING"
+                            )
+                        )
+                    logger.info(f"Inserted {len(tag_assoc_rows)} tag associations")
+
+                # Update sync log with success (while still in transaction)
+                await conn.execute(
+                    text(
+                        f"UPDATE cf_sync_logs SET status = 'success', problems_synced = {synced}, "
+                        f"completed_at = now() WHERE id = {sync_log_id}"
+                    )
                 )
-                await db.flush()
+            # Transaction commits here automatically
 
-            sync_log.status = SyncStatus.SUCCESS
-            sync_log.problems_synced = synced
-            sync_log.completed_at = datetime.now(timezone.utc)
-            logger.info(f"Successfully synced {synced} problems")
+            logger.info(
+                f"Successfully synced {synced} problems with {len(tag_assoc_rows)} tag links"
+            )
             return synced
 
         except Exception as e:
-            sync_log.status = SyncStatus.FAILED
-            sync_log.error_message = str(e)[:2000]
-            sync_log.completed_at = datetime.now(timezone.utc)
-            logger.error(f"Problem sync failed: {e}")
+            # Update sync log with failure
+            async with engine.begin() as conn:
+                error_msg = str(e)[:2000].replace("'", "''")
+                await conn.execute(
+                    text(
+                        f"UPDATE cf_sync_logs SET status = 'failed', error_message = '{error_msg}', "
+                        f"completed_at = now() WHERE id = {sync_log_id}"
+                    )
+                )
+            logger.error(f"Problem sync failed: {e}", exc_info=True)
             raise
 
-    async def _upsert_tags(
+    # Keep old methods as unused (bulk versions above replace them)
+    async def _bulk_upsert_tags(
         self, db: AsyncSession, tag_names: set[str]
     ) -> dict[str, int]:
-        """Upsert tags and return name -> id mapping."""
-        tag_map: dict[str, int] = {}
+        """Deprecated — replaced by raw SQL in sync_problems."""
+        pass
 
-        for name in tag_names:
-            slug = self._slugify(name)
-            category = self._categorize_tag(name)
-
-            stmt = (
-                pg_insert(Tag)
-                .values(name=name, slug=slug, category=category)
-                .on_conflict_do_update(
-                    index_elements=["name"],
-                    set_={"slug": slug, "category": category},
-                )
-                .returning(Tag.id)
-            )
-            result = await db.execute(stmt)
-            tag_id = result.scalar_one()
-            tag_map[name] = tag_id
-
-        return tag_map
-
-    async def _upsert_problem_batch(
+    async def _bulk_upsert_problems(
         self,
         db: AsyncSession,
         problems: list[dict],
         solve_counts: dict[str, int],
         tag_map: dict[str, int],
     ) -> int:
-        """Upsert a batch of problems and their tag associations."""
-        synced = 0
-
-        for p in problems:
-            contest_id = p.get("contestId")
-            index = p.get("index")
-            if not contest_id or not index:
-                continue
-
-            key = f"{contest_id}-{index}"
-            url = f"https://codeforces.com/problemset/problem/{contest_id}/{index}"
-
-            stmt = (
-                pg_insert(Problem)
-                .values(
-                    contest_id=contest_id,
-                    problem_index=index,
-                    name=p.get("name", "Unknown"),
-                    rating=p.get("rating"),
-                    solved_count=solve_counts.get(key, 0),
-                    url=url,
-                )
-                .on_conflict_do_update(
-                    constraint="uq_problem_contest_index",
-                    set_={
-                        "name": p.get("name", "Unknown"),
-                        "rating": p.get("rating"),
-                        "solved_count": solve_counts.get(key, 0),
-                    },
-                )
-                .returning(Problem.id)
-            )
-            result = await db.execute(stmt)
-            problem_id = result.scalar_one()
-
-            # Update tag associations
-            tag_names = p.get("tags", [])
-            if tag_names:
-                # Delete existing associations and re-insert
-                await db.execute(
-                    problem_tags.delete().where(problem_tags.c.problem_id == problem_id)
-                )
-                for tag_name in tag_names:
-                    if tag_name in tag_map:
-                        await db.execute(
-                            pg_insert(problem_tags)
-                            .values(problem_id=problem_id, tag_id=tag_map[tag_name])
-                            .on_conflict_do_nothing()
-                        )
-
-            synced += 1
-
-        return synced
+        """Deprecated — replaced by raw SQL in sync_problems."""
+        pass
 
     async def get_user_solved_problems(self, handle: str) -> set[str]:
         """

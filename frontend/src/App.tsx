@@ -1,13 +1,27 @@
 /**
  * Application shell — routing, auth guards, providers.
+ *
+ * Routing structure (matches UI reference):
+ *   /                → LandingPage (no layout)
+ *   /login           → LoginPage (public-only)
+ *   /register        → RegisterPage (public-only)
+ *   /app             → AppLayout shell (auth-guarded)
+ *     /app           → Dashboard (index)
+ *     /app/coach     → AI Coach (chat)
+ *     /app/practice  → Practice Paths list
+ *     /app/practice/:id → Path detail
+ *     /app/problems  → Problems browser
+ *     /app/problem/:id → Problem workspace
+ *     /app/analytics → Analytics / stats
+ *     /app/profile   → Profile settings
  */
 
 import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from 'react-hot-toast';
+import { Toaster } from '@/components/ui/sonner';
 import { useAuthStore } from '@/store/authStore';
-import { Layout, Spinner } from '@/components/Layout';
+import AppLayout from '@/components/AppLayout';
 
 // Pages
 import LandingPage from '@/pages/LandingPage';
@@ -18,8 +32,9 @@ import ProblemsPage from '@/pages/ProblemsPage';
 import PathsPage from '@/pages/PathsPage';
 import PathDetailPage from '@/pages/PathDetailPage';
 import StatsPage from '@/pages/StatsPage';
-import CoachingPage from '@/pages/CoachingPage';
+import ChatPage from '@/pages/ChatPage';
 import ProfilePage from '@/pages/ProfilePage';
+import ProblemWorkspacePage from '@/pages/ProblemWorkspacePage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,13 +49,13 @@ const queryClient = new QueryClient({
 function PublicOnly({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/app" replace />;
   }
   return <>{children}</>;
 }
 
-/** Require authentication — redirects to /login if not logged in */
-function AuthGuard({ children }: { children: React.ReactNode }) {
+/** Auth guard — loads user, shows spinner, or redirects to /login */
+function AuthGuard() {
   const { isAuthenticated, isLoading, loadUser } = useAuthStore();
 
   useEffect(() => {
@@ -49,8 +64,8 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <Spinner size="lg" />
+      <div className="flex h-screen items-center justify-center bg-background">
+        <div className="h-12 w-12 animate-spin rounded-full border-2 border-muted-foreground border-t-primary" />
       </div>
     );
   }
@@ -59,7 +74,8 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" replace />;
   }
 
-  return <Layout>{children}</Layout>;
+  // Render AppLayout which contains <Outlet /> for child routes
+  return <AppLayout />;
 }
 
 export default function App() {
@@ -86,79 +102,33 @@ export default function App() {
             }
           />
 
-          {/* Authenticated routes */}
-          <Route
-            path="/dashboard"
-            element={
-              <AuthGuard>
-                <DashboardPage />
-              </AuthGuard>
-            }
-          />
-          <Route
-            path="/problems"
-            element={
-              <AuthGuard>
-                <ProblemsPage />
-              </AuthGuard>
-            }
-          />
-          <Route
-            path="/paths"
-            element={
-              <AuthGuard>
-                <PathsPage />
-              </AuthGuard>
-            }
-          />
-          <Route
-            path="/paths/:id"
-            element={
-              <AuthGuard>
-                <PathDetailPage />
-              </AuthGuard>
-            }
-          />
-          <Route
-            path="/stats"
-            element={
-              <AuthGuard>
-                <StatsPage />
-              </AuthGuard>
-            }
-          />
-          <Route
-            path="/coaching"
-            element={
-              <AuthGuard>
-                <CoachingPage />
-              </AuthGuard>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <AuthGuard>
-                <ProfilePage />
-              </AuthGuard>
-            }
-          />
+          {/* Authenticated routes — all under /app with AppLayout shell */}
+          <Route path="/app" element={<AuthGuard />}>
+            <Route index element={<DashboardPage />} />
+            <Route path="coach" element={<ChatPage />} />
+            <Route path="practice" element={<PathsPage />} />
+            <Route path="practice/:id" element={<PathDetailPage />} />
+            <Route path="problems" element={<ProblemsPage />} />
+            <Route path="problems/:id" element={<ProblemWorkspacePage />} />
+            <Route path="analytics" element={<StatsPage />} />
+            <Route path="profile" element={<ProfilePage />} />
+          </Route>
+
+          {/* Legacy redirects — old routes → new /app/* routes */}
+          <Route path="/dashboard" element={<Navigate to="/app" replace />} />
+          <Route path="/chat" element={<Navigate to="/app/coach" replace />} />
+          <Route path="/coaching" element={<Navigate to="/app/coach" replace />} />
+          <Route path="/paths" element={<Navigate to="/app/practice" replace />} />
+          <Route path="/paths/:id" element={<Navigate to="/app/practice/:id" replace />} />
+          <Route path="/problems" element={<Navigate to="/app/problems" replace />} />
+          <Route path="/stats" element={<Navigate to="/app/analytics" replace />} />
+          <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
 
           {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 3000,
-          style: {
-            background: '#1f2937',
-            color: '#f9fafb',
-            fontSize: '14px',
-          },
-        }}
-      />
+      <Toaster position="top-right" duration={3000} richColors />
     </QueryClientProvider>
   );
 }

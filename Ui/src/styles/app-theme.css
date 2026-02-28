@@ -1,0 +1,68 @@
+:root {
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+  --primary: 180 100% 50%; /* Neon Cyan */
+  --primary-foreground: 240 5.9% 10%;
+  --secondary: 240 3.7% 15.9%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --accent: 240 3.7% 15.9%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --ring: 180 100% 50%;
+  --radius: 0.5rem;
+
+  /* Sidebar specific overrides */
+  --sidebar: 240 10% 3.9%;
+  --sidebar-foreground: 240 5% 64.9%;
+  --sidebar-primary: 180 100% 50%;
+  --sidebar-primary-foreground: 240 5.9% 10%;
+  --sidebar-accent: 240 3.7% 15.9%;
+  --sidebar-accent-foreground: 0 0% 98%;
+  --sidebar-border: 240 3.7% 15.9%;
+  --sidebar-ring: 180 100% 50%;
+}
+
+.dark {
+  --background: 0 0% 0%; /* Deep Black */
+  --foreground: 0 0% 98%;
+  --card: 240 10% 4%; /* Slightly lighter than black */
+  --card-foreground: 0 0% 98%;
+  --popover: 0 0% 0%;
+  --popover-foreground: 0 0% 98%;
+  --primary: 180 100% 50%; /* Neon Cyan */
+  --primary-foreground: 0 0% 0%;
+  --secondary: 240 4% 10%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 240 4% 10%;
+  --muted-foreground: 240 5% 65%;
+  --accent: 240 4% 10%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 4% 16%;
+  --input: 240 4% 16%;
+  --ring: 180 100% 50%;
+  
+  --sidebar: 0 0% 0%;
+  --sidebar-foreground: 240 5% 65%;
+  --sidebar-primary: 180 100% 50%;
+  --sidebar-primary-foreground: 0 0% 0%;
+  --sidebar-accent: 240 4% 10%;
+  --sidebar-accent-foreground: 180 100% 50%;
+  --sidebar-border: 240 4% 16%;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}

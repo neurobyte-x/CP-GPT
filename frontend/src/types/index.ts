@@ -168,6 +168,55 @@ export interface ProblemFilters {
   sort_order?: 'asc' | 'desc';
 }
 
+// ── Chat types ─────────────────────────────────────────────────
+
+export interface Conversation {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  message_count: number;
+  last_message_preview: string | null;
+}
+
+export interface ChatMessage {
+  id: number;
+  conversation_id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  metadata_: {
+    problems?: ChatProblem[];
+    tool_calls?: { tool: string; args: Record<string, unknown>; result_count: number }[];
+  } | null;
+  created_at: string;
+}
+
+/** Lightweight problem shape returned in chat metadata */
+export interface ChatProblem {
+  id: number;
+  contest_id: number;
+  problem_index: string;
+  name: string;
+  rating: number | null;
+  solved_count: number;
+  tags: string[];
+  url: string;
+  contest_name: string | null;
+}
+
+export interface ConversationDetail {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  messages: ChatMessage[];
+}
+
+export interface ChatResponse {
+  user_message: ChatMessage;
+  assistant_message: ChatMessage;
+}
+
 // ── Utility types ───────────────────────────────────────────────
 
 export function getRatingColor(rating: number | null): string {

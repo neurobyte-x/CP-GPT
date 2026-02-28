@@ -1,12 +1,12 @@
 /**
- * Login page — email/password form.
+ * Login page — dark theme, matching the CPCoach.ai design system.
  */
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
-import { Route } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { Zap } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -20,29 +20,38 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
-      navigate('/dashboard');
+      navigate('/app');
     } catch {
       toast.error(error ?? 'Invalid email or password');
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-brand-50 px-4">
-      <div className="w-full max-w-md">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      {/* Subtle background glow */}
+      <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-[radial-gradient(ellipse,rgba(255,255,255,0.02)_0%,transparent_60%)] pointer-events-none" />
+
+      <div className="relative w-full max-w-md">
+        {/* Logo */}
         <div className="mb-8 text-center">
-          <Link to="/" className="inline-flex items-center gap-2 mb-4">
-            <Route className="h-10 w-10 text-brand-600" />
-            <h1 className="text-3xl font-bold text-gray-900">CP Path Builder</h1>
+          <Link to="/" className="inline-flex items-center gap-2.5 mb-4">
+            <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.15)]">
+              <Zap className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <span className="text-2xl font-bold">
+              Cp-GPT<span className="text-primary"></span>
+            </span>
           </Link>
-          <p className="text-gray-500">Sign in to continue your practice</p>
+          <p className="text-muted-foreground text-sm">Sign in to continue your practice</p>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
-          <h2 className="mb-6 text-xl font-semibold text-gray-900">Sign In</h2>
+        {/* Card */}
+        <div className="rounded-2xl border border-border bg-card p-8">
+          <h2 className="mb-6 text-xl font-semibold text-foreground">Sign In</h2>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">
+              <label className="mb-1.5 block text-sm font-medium text-foreground">
                 Email
               </label>
               <input
@@ -50,14 +59,14 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                className="w-full rounded-lg border border-border bg-input-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary/20"
                 placeholder="you@example.com"
                 autoComplete="email"
               />
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">
+              <label className="mb-1.5 block text-sm font-medium text-foreground">
                 Password
               </label>
               <input
@@ -66,14 +75,14 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={8}
-                className="w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                className="w-full rounded-lg border border-border bg-input-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary/20"
                 placeholder="Min 8 characters"
                 autoComplete="current-password"
               />
             </div>
 
             {error && (
-              <div className="rounded-lg bg-red-50 px-4 py-2.5 text-sm text-red-600 border border-red-100">
+              <div className="rounded-lg bg-destructive/10 px-4 py-2.5 text-sm text-destructive border border-destructive/20">
                 {error}
               </div>
             )}
@@ -81,7 +90,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50 transition-colors"
+              className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)]"
             >
               {isLoading ? 'Signing in...' : 'Sign In'}
             </button>
@@ -90,15 +99,16 @@ export default function LoginPage() {
           <div className="mt-6 text-center">
             <Link
               to="/register"
-              className="text-sm text-brand-600 hover:underline"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              Don't have an account? Register
+              Don't have an account?{' '}
+              <span className="text-primary font-medium">Register</span>
             </Link>
           </div>
         </div>
 
         <div className="mt-4 text-center">
-          <Link to="/" className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
+          <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Back to home
           </Link>
         </div>

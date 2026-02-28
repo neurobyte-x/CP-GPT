@@ -122,3 +122,53 @@ export function useSyncCF() {
     },
   });
 }
+
+// ── Chat ────────────────────────────────────────────────────────
+
+export function useConversations() {
+  return useQuery({
+    queryKey: ['conversations'],
+    queryFn: () => api.listConversations(),
+    staleTime: 30 * 1000, // 30 seconds
+  });
+}
+
+export function useConversation(id: string | null) {
+  return useQuery({
+    queryKey: ['conversation', id],
+    queryFn: () => api.getConversation(id!),
+    enabled: !!id,
+  });
+}
+
+export function useCreateConversation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (title?: string) => api.createConversation(title),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['conversations'] });
+    },
+  });
+}
+
+export function useDeleteConversation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.deleteConversation(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['conversations'] });
+    },
+  });
+}
+
+export function useSendMessage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (params: { conversationId: string; message: string }) =>
+      api.sendMessage(params.conversationId, params.message),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ['conversation', variables.conversationId] });
+      qc.invalidateQueries({ queryKey: ['conversations'] });
+    },
+  });
+}

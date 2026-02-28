@@ -9,8 +9,11 @@
 
 import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
 import type {
+  ChatResponse,
   CoachingRequest,
   CoachingResponse,
+  Conversation,
+  ConversationDetail,
   CreatePathRequest,
   DashboardStats,
   LoginRequest,
@@ -193,6 +196,39 @@ class ApiClient {
 
   async getCoaching(data: CoachingRequest): Promise<CoachingResponse> {
     const resp = await this.client.post('/coaching', data);
+    return resp.data;
+  }
+
+  // ── Chat ─────────────────────────────────────────────────────
+
+  async listConversations(): Promise<Conversation[]> {
+    const resp = await this.client.get('/chat/conversations');
+    return resp.data;
+  }
+
+  async createConversation(title?: string): Promise<ConversationDetail> {
+    const resp = await this.client.post('/chat/conversations', { title });
+    return resp.data;
+  }
+
+  async getConversation(id: string): Promise<ConversationDetail> {
+    const resp = await this.client.get(`/chat/conversations/${id}`);
+    return resp.data;
+  }
+
+  async deleteConversation(id: string): Promise<void> {
+    await this.client.delete(`/chat/conversations/${id}`);
+  }
+
+  async updateConversationTitle(id: string, title: string): Promise<Conversation> {
+    const resp = await this.client.patch(`/chat/conversations/${id}`, { title });
+    return resp.data;
+  }
+
+  async sendMessage(conversationId: string, message: string): Promise<ChatResponse> {
+    const resp = await this.client.post(`/chat/conversations/${conversationId}/messages`, {
+      message,
+    });
     return resp.data;
   }
 }

@@ -1,15 +1,23 @@
 /**
  * User profile page — settings, CF handle linking, account management.
+ * Dark theme styled, no Layout.tsx dependencies.
  */
 
 import { useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useSyncCF } from '@/hooks/useApi';
-import { Card, Spinner } from '@/components/Layout';
-import { User, RefreshCw, Link2, Save, Shield } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { clsx } from 'clsx';
-import { getRatingBadgeColor } from '@/types';
+import { User, RefreshCw, Link2, Save, Shield, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+
+function ratingColor(r: number | null) {
+  if (r === null) return 'text-muted-foreground';
+  if (r < 1200) return 'text-gray-400';
+  if (r < 1400) return 'text-green-400';
+  if (r < 1600) return 'text-cyan-400';
+  if (r < 1900) return 'text-blue-400';
+  if (r < 2100) return 'text-purple-400';
+  return 'text-red-400';
+}
 
 export default function ProfilePage() {
   const { user, updateUser, isLoading } = useAuthStore();
@@ -19,7 +27,13 @@ export default function ProfilePage() {
   const [cfHandle, setCfHandle] = useState(user?.cf_handle ?? '');
   const [estimatedRating, setEstimatedRating] = useState(user?.estimated_rating ?? 800);
 
-  if (!user) return <Spinner size="lg" />;
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center h-full py-32">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   const handleSave = async () => {
     try {
@@ -48,69 +62,71 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6 p-4 lg:p-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
-        <p className="text-sm text-gray-500">Manage your account and Codeforces integration</p>
+        <h1 className="text-xl font-semibold text-foreground">Profile Settings</h1>
+        <p className="text-sm text-muted-foreground">
+          Manage your account and Codeforces integration
+        </p>
       </div>
 
       {/* Account Info */}
-      <Card>
-        <div className="mb-4 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-100">
-            <User className="h-6 w-6 text-brand-600" />
+      <div className="bg-card border border-border rounded-xl p-5">
+        <div className="mb-5 flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+            <User className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">{user.username}</h2>
-            <p className="text-sm text-gray-500">{user.email}</p>
+            <h2 className="text-base font-semibold">{user.username}</h2>
+            <p className="text-sm text-muted-foreground">{user.email}</p>
           </div>
         </div>
 
         <div className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Username</label>
+            <label className="mb-1.5 block text-sm font-medium text-foreground">Username</label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              className="w-full rounded-lg border border-border bg-secondary/60 px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary/20"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Email</label>
+            <label className="mb-1.5 block text-sm font-medium text-foreground">Email</label>
             <input
               type="email"
               value={user.email}
               disabled
-              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500"
+              className="w-full rounded-lg border border-border bg-secondary/30 px-3 py-2.5 text-sm text-muted-foreground cursor-not-allowed"
             />
-            <p className="mt-1 text-xs text-gray-400">Email cannot be changed</p>
+            <p className="mt-1 text-xs text-muted-foreground">Email cannot be changed</p>
           </div>
         </div>
-      </Card>
+      </div>
 
       {/* Codeforces Integration */}
-      <Card>
-        <div className="mb-4 flex items-center gap-2">
-          <Link2 className="h-5 w-5 text-gray-700" />
-          <h2 className="text-lg font-semibold text-gray-900">Codeforces Integration</h2>
+      <div className="bg-card border border-border rounded-xl p-5">
+        <div className="mb-5 flex items-center gap-2">
+          <Link2 className="h-5 w-5 text-neon-cyan" />
+          <h2 className="text-base font-semibold">Codeforces Integration</h2>
         </div>
 
         <div className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">CF Handle</label>
+            <label className="mb-1.5 block text-sm font-medium text-foreground">CF Handle</label>
             <input
               type="text"
               value={cfHandle}
               onChange={(e) => setCfHandle(e.target.value)}
               placeholder="e.g., tourist"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              className="w-full rounded-lg border border-border bg-secondary/60 px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary/20"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">
+            <label className="mb-1.5 block text-sm font-medium text-foreground">
               Manual Rating Estimate
             </label>
             <input
@@ -120,26 +136,26 @@ export default function ProfilePage() {
               min={800}
               max={3500}
               step={100}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              className="w-full rounded-lg border border-border bg-secondary/60 px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary/20"
             />
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="mt-1 text-xs text-muted-foreground">
               Used when CF data isn't available. Overwritten on sync.
             </p>
           </div>
 
           {user.cf_handle && (
-            <div className="rounded-lg bg-gray-50 p-4">
-              <h4 className="text-sm font-medium text-gray-700">Synced Data</h4>
-              <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
+            <div className="rounded-lg bg-secondary/40 border border-border/50 p-4">
+              <h4 className="text-sm font-medium mb-2">Synced Data</h4>
+              <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-gray-500">Current Rating:</span>{' '}
-                  <span className={clsx('font-medium', getRatingBadgeColor(user.estimated_rating).split(' ')[1])}>
+                  <span className="text-muted-foreground">Current Rating:</span>{' '}
+                  <span className={`font-bold ${ratingColor(user.estimated_rating)}`}>
                     {user.estimated_rating ?? 'N/A'}
                   </span>
                 </div>
                 <div>
-                  <span className="text-gray-500">Max Rating:</span>{' '}
-                  <span className="font-medium text-gray-700">
+                  <span className="text-muted-foreground">Max Rating:</span>{' '}
+                  <span className="font-bold text-foreground">
                     {user.cf_max_rating ?? 'N/A'}
                   </span>
                 </div>
@@ -147,33 +163,33 @@ export default function ProfilePage() {
               <button
                 onClick={handleSync}
                 disabled={syncCF.isPending}
-                className="mt-3 flex items-center gap-2 rounded-lg bg-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-300 disabled:opacity-50"
+                className="mt-3 flex items-center gap-2 rounded-lg border border-border bg-secondary/60 px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <RefreshCw className={clsx('h-4 w-4', syncCF.isPending && 'animate-spin')} />
+                <RefreshCw className={`h-4 w-4 ${syncCF.isPending ? 'animate-spin' : ''}`} />
                 {syncCF.isPending ? 'Syncing...' : 'Sync Now'}
               </button>
             </div>
           )}
         </div>
-      </Card>
+      </div>
 
       {/* Account Security */}
-      <Card>
-        <div className="mb-4 flex items-center gap-2">
-          <Shield className="h-5 w-5 text-gray-700" />
-          <h2 className="text-lg font-semibold text-gray-900">Account</h2>
+      <div className="bg-card border border-border rounded-xl p-5">
+        <div className="mb-3 flex items-center gap-2">
+          <Shield className="h-5 w-5 text-neon-purple" />
+          <h2 className="text-base font-semibold">Account</h2>
         </div>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted-foreground">
           Member since {new Date(user.created_at).toLocaleDateString()}
         </p>
-      </Card>
+      </div>
 
       {/* Save Button */}
       <div className="flex justify-end">
         <button
           onClick={handleSave}
           disabled={isLoading}
-          className="flex items-center gap-2 rounded-lg bg-brand-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+          className="flex items-center gap-2 rounded-lg bg-primary text-primary-foreground px-6 py-2.5 text-sm font-medium hover:bg-primary/90 shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Save className="h-4 w-4" />
           {isLoading ? 'Saving...' : 'Save Changes'}
