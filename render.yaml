@@ -1,0 +1,55 @@
+services:
+  - type: web
+    name: cp-gpt-backend
+    runtime: python
+    rootDir: backend
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    buildCommand: "pip install -r requirements.txt"
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: PORT
+        value: "8000"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: cp-gpt-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: cp-gpt-redis
+          type: redis
+          property: connectionString
+      - key: SECRET_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: CF_API_KEY
+        sync: false
+      - key: CF_API_SECRET
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: https://cp-gpt-frontend.onrender.com
+
+  - type: static_site
+    name: cp-gpt-frontend
+    staticPublishPath: frontend/dist
+    buildCommand: "npm ci --prefix frontend && npm run build --prefix frontend"
+    envVars:
+      - key: VITE_API_BASE_URL
+        fromService:
+          name: cp-gpt-backend
+          type: web
+          property: url
+
+  - type: pserv
+    name: cp-gpt-postgres
+    plan: free
+    ipAllowList: []
+
+  - type: redis
+    name: cp-gpt-redis
+    plan: free
