@@ -24,14 +24,12 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
-# ── 1. Database adapter ─────────────────────────────────────────
 
 
 async def get_user_db(session: AsyncSession = Depends(get_db)):
     yield SQLAlchemyUserDatabase(session, User)
 
 
-# ── 2. UserManager ──────────────────────────────────────────────
 
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
@@ -56,7 +54,6 @@ async def get_user_manager(user_db=Depends(get_user_db)):
     yield UserManager(user_db)
 
 
-# ── 3. Auth backend (Bearer JWT) ────────────────────────────────
 
 bearer_transport = BearerTransport(tokenUrl="/api/v1/auth/login")
 
@@ -76,14 +73,12 @@ auth_backend = AuthenticationBackend(
 )
 
 
-# ── 4. FastAPIUsers instance ────────────────────────────────────
 
 fastapi_users = FastAPIUsers[User, uuid.UUID](
     get_user_manager,
     [auth_backend],
 )
 
-# Dependency shortcuts — use these in endpoint files
 current_active_user = fastapi_users.current_user(active=True)
 current_superuser = fastapi_users.current_user(active=True, superuser=True)
 optional_current_user = fastapi_users.current_user(active=True, optional=True)

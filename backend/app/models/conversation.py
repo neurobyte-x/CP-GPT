@@ -28,7 +28,6 @@ class Conversation(Base):
         String(200), nullable=False, default="New Conversation"
     )
 
-    # Timestamps
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -36,7 +35,6 @@ class Conversation(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    # Relationships
     user = relationship("User", lazy="selectin")
     messages = relationship(
         "Message",
@@ -64,20 +62,17 @@ class Message(Base):
     )
     role: Mapped[str] = mapped_column(
         String(20), nullable=False
-    )  # "user" or "assistant"
+    )
     content: Mapped[str] = mapped_column(Text, nullable=False)
 
-    # Store tool calls, problem cards, etc.
     metadata_: Mapped[dict | None] = mapped_column(
         "metadata", JSONB, nullable=True, default=None
     )
 
-    # Timestamps
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
 
-    # Relationships
     conversation = relationship("Conversation", back_populates="messages")
 
     def __repr__(self) -> str:

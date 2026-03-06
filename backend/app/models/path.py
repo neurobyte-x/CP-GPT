@@ -58,7 +58,6 @@ class PracticePath(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    # Configuration
     topics: Mapped[list[str]] = mapped_column(ARRAY(String), nullable=False)
     min_rating: Mapped[int] = mapped_column(Integer, nullable=False)
     max_rating: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -69,7 +68,6 @@ class PracticePath(Base):
     )
     forced_mode: Mapped[bool] = mapped_column(Boolean, default=False)
 
-    # Progress
     current_position: Mapped[int] = mapped_column(Integer, default=0)
     total_problems: Mapped[int] = mapped_column(Integer, default=0)
     status: Mapped[PathStatus] = mapped_column(
@@ -78,7 +76,6 @@ class PracticePath(Base):
         default=PathStatus.ACTIVE,
     )
 
-    # Timestamps
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -89,7 +86,6 @@ class PracticePath(Base):
         DateTime(timezone=True), nullable=True
     )
 
-    # Relationships
     user = relationship("User", back_populates="practice_paths")
     path_problems = relationship(
         "PathProblem",
@@ -131,7 +127,6 @@ class PathProblem(Base):
         default=ProblemStatus.LOCKED,
     )
 
-    # Timestamps
     unlocked_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
@@ -139,7 +134,6 @@ class PathProblem(Base):
         DateTime(timezone=True), nullable=True
     )
 
-    # Relationships
     path = relationship("PracticePath", back_populates="path_problems")
     problem = relationship("Problem", back_populates="path_entries", lazy="selectin")
 

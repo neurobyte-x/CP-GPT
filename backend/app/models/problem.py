@@ -17,7 +17,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
-# ── Association table for Problem <-> Tag many-to-many ───────────
 problem_tags = Table(
     "problem_tags",
     Base.metadata,
@@ -47,9 +46,8 @@ class Tag(Base):
     )
     category: Mapped[str | None] = mapped_column(
         String(50), nullable=True
-    )  # e.g., "data_structures", "algorithms", "math"
+    )
 
-    # Relationships
     problems = relationship(
         "Problem", secondary=problem_tags, back_populates="tags", lazy="selectin"
     )
@@ -77,10 +75,9 @@ class Problem(Base):
     contest_name: Mapped[str | None] = mapped_column(String(500), nullable=True)
     contest_type: Mapped[str | None] = mapped_column(
         String(20), nullable=True
-    )  # CF, ICPC, IOI
+    )
     url: Mapped[str] = mapped_column(Text, nullable=False)
 
-    # Timestamps
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -88,7 +85,6 @@ class Problem(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    # Relationships
     tags = relationship(
         "Tag", secondary=problem_tags, back_populates="problems", lazy="selectin"
     )

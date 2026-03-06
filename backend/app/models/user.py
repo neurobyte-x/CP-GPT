@@ -25,12 +25,10 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
 
     __tablename__ = "users"
 
-    # ── Custom fields ────────────────────────────────────────────
     username: Mapped[str] = mapped_column(
         String(100), unique=True, nullable=False, index=True
     )
 
-    # Codeforces integration
     cf_handle: Mapped[str | None] = mapped_column(
         String(100), unique=True, nullable=True, index=True
     )
@@ -40,7 +38,6 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         DateTime(timezone=True), nullable=True
     )
 
-    # Timestamps
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -48,7 +45,6 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    # Relationships
     practice_paths = relationship(
         "PracticePath", back_populates="user", lazy="selectin"
     )

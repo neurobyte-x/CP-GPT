@@ -51,7 +51,6 @@ async def create_path(
     if payload.min_rating > payload.max_rating:
         raise BadRequestException("min_rating must be <= max_rating")
 
-    # Get solved problem IDs for exclusion
     exclude_ids = await user_analyzer.get_user_solved_problem_ids(db, current_user.id)
 
     config = PathConfig(
@@ -206,7 +205,6 @@ async def mark_problem_solved(
     Mark a problem in a path as solved.
     In forced mode, this unlocks the next problem.
     """
-    # Verify path ownership
     result = await db.execute(
         select(PracticePath)
         .options(selectinload(PracticePath.path_problems))
@@ -224,7 +222,6 @@ async def mark_problem_solved(
     if path.status != PathStatus.ACTIVE:
         raise BadRequestException("Path is not active")
 
-    # Find the path problem entry
     path_problem = None
     for pp in path.path_problems:
         if pp.problem_id == payload.problem_id:
@@ -239,17 +236,14 @@ async def mark_problem_solved(
             "This problem is locked. Solve the previous problem first."
         )
 
-    # Mark as solved
     path_problem.status = ProblemStatus.SOLVED
     path_problem.solved_at = datetime.now(timezone.utc)
 
-    # Update path position
     solved_count = sum(
         1 for pp in path.path_problems if pp.status == ProblemStatus.SOLVED
     )
     path.current_position = solved_count
 
-    # Unlock next problem in forced mode
     if path.forced_mode:
         next_pos = path_problem.position + 1
         for pp in path.path_problems:
@@ -258,12 +252,10 @@ async def mark_problem_solved(
                 pp.unlocked_at = datetime.now(timezone.utc)
                 break
 
-    # Check path completion
     if solved_count >= path.total_problems:
         path.status = PathStatus.COMPLETED
         path.completed_at = datetime.now(timezone.utc)
 
-    # Upsert user progress record
     progress_result = await db.execute(
         select(UserProgress).where(
             and_(
@@ -336,7 +328,6 @@ async def skip_problem(
 
     path_problem.status = ProblemStatus.SKIPPED
 
-    # Unlock next in forced mode
     if path.forced_mode:
         next_pos = position + 1
         for pp in path.path_problems:

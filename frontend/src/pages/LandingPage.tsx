@@ -195,7 +195,7 @@ function AnimatedTerminal() {
           <div className="w-3 h-3 rounded-full bg-[#28c840]" />
         </div>
         <span className="text-[11px] text-muted-foreground" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-          cpcoach — ai-session
+          Cp-GPT — ai-session
         </span>
         <div className="w-12" />
       </div>
@@ -413,7 +413,7 @@ function RatingGraph() {
     <div ref={ref} className="bg-card border border-border rounded-2xl p-5 overflow-hidden">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <div className="text-sm" style={{ fontWeight: 600 }}>Rating Progression with CPCoach</div>
+          <div className="text-sm" style={{ fontWeight: 600 }}>Rating Progression with Cp-GPT</div>
           <div className="text-xs text-muted-foreground mt-0.5">Real user trajectory over 14 months</div>
         </div>
         <div className="flex items-center gap-2">
@@ -1011,7 +1011,7 @@ export default function LandingPage() {
               WHY US
             </div>
             <h2 className="text-3xl lg:text-4xl mb-4" style={{ fontWeight: 700 }}>
-              CPCoach vs{" "}
+              Cp-GPT vs{" "}
               <span className="text-muted-foreground">Traditional Practice</span>
             </h2>
           </div>

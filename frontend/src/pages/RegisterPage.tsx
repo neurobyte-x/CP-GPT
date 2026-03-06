@@ -1,5 +1,5 @@
 /**
- * Registration page — dark theme, matching the CPCoach.ai design system.
+ * Registration page — dark theme, matching the Cp-GPT.ai design system.
  */
 
 import { useState } from 'react';

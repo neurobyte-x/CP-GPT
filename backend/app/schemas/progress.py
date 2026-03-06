@@ -45,7 +45,7 @@ class DashboardStats(BaseModel):
     estimated_rating: Optional[int] = None
     topic_stats: list[TopicStatsResponse] = []
     recent_solves: list[UserProgressResponse] = []
-    rating_distribution: dict[str, int] = {}  # rating_bucket -> count
+    rating_distribution: dict[str, int] = {}
 
 
 class SyncStatusResponse(BaseModel):

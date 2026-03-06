@@ -18,11 +18,8 @@ from app.config import get_settings
 
 settings = get_settings()
 
-# Build connect_args — Neon DB requires SSL
 _connect_args: dict = {}
 if settings.DATABASE_SSL:
-    # asyncpg uses the 'ssl' kwarg (not 'sslmode')
-    # Use a permissive SSL context that works with Neon's certificates
     ssl_ctx = ssl.create_default_context()
     ssl_ctx.check_hostname = False
     ssl_ctx.verify_mode = ssl.CERT_NONE

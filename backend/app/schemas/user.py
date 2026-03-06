@@ -8,8 +8,6 @@ from fastapi_users import schemas as fu_schemas
 from pydantic import Field
 
 
-# ── FastAPI-Users schemas ────────────────────────────────────────
-# These extend the base schemas to include our custom fields.
 
 
 class UserRead(fu_schemas.BaseUser[uuid.UUID]):
@@ -38,8 +36,6 @@ class UserUpdate(fu_schemas.BaseUserUpdate):
     estimated_rating: Optional[int] = Field(None, ge=800, le=3500)
 
 
-# ── Legacy convenience aliases ───────────────────────────────────
-# Kept so other modules (dashboard, profile, etc.) don't need big refactors.
 
 UserResponse = UserRead
 

@@ -14,13 +14,11 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from app.config import get_settings
 from app.database import Base
 
-# Import all models so they're registered with Base.metadata
 from app.models import *  # noqa: F401,F403
 
 config = context.config
 settings = get_settings()
 
-# Override sqlalchemy.url from environment
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 if config.config_file_name is not None:
@@ -28,7 +26,6 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-# Build connect_args for SSL (required for Neon DB)
 _connect_args: dict = {}
 if settings.DATABASE_SSL:
     ssl_ctx = ssl.create_default_context()

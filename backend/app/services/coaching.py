@@ -25,7 +25,6 @@ from app.models.problem import Problem
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-# ── Prompt Templates ─────────────────────────────────────────────
 
 SYSTEM_PROMPT = """You are an expert competitive programming coach. Your role is to help \
 students LEARN, not to solve problems for them.
@@ -170,7 +169,6 @@ class CoachingService:
                 "follow_up_suggestions": [],
             }
 
-        # Validate action
         if action not in ACTION_PROMPTS:
             return {
                 "response": f"Unknown action: {action}",
@@ -178,7 +176,6 @@ class CoachingService:
                 "follow_up_suggestions": [],
             }
 
-        # Build prompts
         system_prompt = SYSTEM_PROMPT.format(hint_level=hint_level)
         tags_str = ", ".join(t.name for t in problem.tags) if problem.tags else "N/A"
 
@@ -193,7 +190,6 @@ class CoachingService:
             user_context=user_context or "No additional context provided.",
         )
 
-        # Safety: warn about high hint levels
         warning = None
         if action == "solution":
             warning = "Full solution provided. Make sure you've tried solving it yourself first!"
@@ -225,7 +221,6 @@ class CoachingService:
                 "Please try again later."
             )
 
-        # Generate follow-up suggestions
         follow_ups = self._get_follow_up_suggestions(action, hint_level)
 
         return {
@@ -274,5 +269,4 @@ class CoachingService:
         return suggestions
 
 
-# Singleton
 coaching_service = CoachingService()

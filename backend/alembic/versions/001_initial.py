@@ -12,7 +12,6 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-# revision identifiers, used by Alembic.
 revision: str = "001_initial"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
@@ -20,7 +19,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # ── users ────────────────────────────────────────────────────
     op.create_table(
         "users",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
@@ -47,7 +45,6 @@ def upgrade() -> None:
         ),
     )
 
-    # ── tags ─────────────────────────────────────────────────────
     op.create_table(
         "tags",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
@@ -56,7 +53,6 @@ def upgrade() -> None:
         sa.Column("category", sa.String(50), nullable=True),
     )
 
-    # ── problems ─────────────────────────────────────────────────
     op.create_table(
         "problems",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
@@ -87,7 +83,7 @@ def upgrade() -> None:
         ),
     )
 
-    # ── problem_tags (many-to-many) ──────────────────────────────
+
     op.create_table(
         "problem_tags",
         sa.Column(
@@ -104,7 +100,7 @@ def upgrade() -> None:
         ),
     )
 
-    # ── practice_paths ───────────────────────────────────────────
+
     pathmode_enum = postgresql.ENUM(
         "learning", "revision", "challenge", name="pathmode", create_type=True
     )
@@ -152,7 +148,7 @@ def upgrade() -> None:
         sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
     )
 
-    # ── path_problems ────────────────────────────────────────────
+
     problemstatus_enum = postgresql.ENUM(
         "locked",
         "unlocked",
@@ -187,7 +183,7 @@ def upgrade() -> None:
         sa.Column("solved_at", sa.DateTime(timezone=True), nullable=True),
     )
 
-    # ── user_progress ────────────────────────────────────────────
+
     attemptstatus_enum = postgresql.ENUM(
         "attempted", "solved", "gave_up", name="attemptstatus", create_type=True
     )
@@ -225,7 +221,7 @@ def upgrade() -> None:
         sa.Column("solved_at", sa.DateTime(timezone=True), nullable=True),
     )
 
-    # ── user_topic_stats ─────────────────────────────────────────
+
     op.create_table(
         "user_topic_stats",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
@@ -255,7 +251,7 @@ def upgrade() -> None:
         ),
     )
 
-    # ── cf_sync_logs ─────────────────────────────────────────────
+
     syncstatus_enum = postgresql.ENUM(
         "running", "success", "failed", name="syncstatus", create_type=True
     )
@@ -288,7 +284,7 @@ def downgrade() -> None:
     op.drop_table("tags")
     op.drop_table("users")
 
-    # Drop custom enum types
+
     sa.Enum(name="syncstatus").drop(op.get_bind(), checkfirst=True)
     sa.Enum(name="attemptstatus").drop(op.get_bind(), checkfirst=True)
     sa.Enum(name="problemstatus").drop(op.get_bind(), checkfirst=True)

@@ -15,7 +15,6 @@ from app.core.users import (
 from app.database import get_db  # noqa: F401
 from app.models.user import User
 
-# Re-export FastAPI-Users dependencies under the names other endpoints expect.
 get_current_user = current_active_user
 get_optional_user = optional_current_user
 require_admin = current_superuser

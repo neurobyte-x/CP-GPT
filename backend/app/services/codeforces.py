@@ -84,13 +84,13 @@ class CodeforcesService:
         except httpx.RequestError as e:
             raise ExternalAPIException("Codeforces", str(e))
 
-    # ── Public API Methods ───────────────────────────────────────
+
 
     async def fetch_all_problems(self) -> dict[str, Any]:
         """Fetch the complete problem set from Codeforces."""
         url = f"{self.BASE_URL}/problemset.problems"
         result = await self._rate_limited_get(url)
-        return result  # {"problems": [...], "problemStatistics": [...]}
+        return result
 
     async def fetch_user_info(self, handle: str) -> dict:
         """Fetch user profile info."""
@@ -119,7 +119,7 @@ class CodeforcesService:
         url = f"{self.BASE_URL}/contest.list"
         return await self._rate_limited_get(url, params={"gym": gym})
 
-    # ── Data Synchronization ─────────────────────────────────────
+
 
     async def sync_problems(self, db: AsyncSession) -> int:
         """
@@ -131,7 +131,6 @@ class CodeforcesService:
         from app.database import engine
         from sqlalchemy import text
 
-        # Create sync log (via passed db session for audit trail)
         sync_log = CFSyncLog(sync_type="problems", status=SyncStatus.RUNNING)
         db.add(sync_log)
         await db.flush()
@@ -143,21 +142,17 @@ class CodeforcesService:
             statistics_data = raw.get("problemStatistics", [])
             logger.info(f"Fetched {len(problems_data)} problems from CF API")
 
-            # Build solve count lookup
             solve_counts: dict[str, int] = {}
             for stat in statistics_data:
                 key = f"{stat['contestId']}-{stat['index']}"
                 solve_counts[key] = stat.get("solvedCount", 0)
 
-            # Collect all unique tags
             all_tag_names: set[str] = set()
             for p in problems_data:
                 for tag_name in p.get("tags", []):
                     all_tag_names.add(tag_name)
 
-            # ── Use engine.begin() for all DB operations ──────────
             async with engine.begin() as conn:
-                # ── Step 1: Bulk upsert tags ──────────────────────
                 tag_map: dict[str, int] = {}
                 if all_tag_names:
                     tag_values = ", ".join(
@@ -174,7 +169,6 @@ class CodeforcesService:
                     tag_map = {row.name: row.id for row in result}
                 logger.info(f"Upserted {len(tag_map)} tags")
 
-                # ── Step 2: Bulk upsert problems in batches ────────
                 synced = 0
                 batch_size = 1000
                 problem_id_map: dict[str, int] = {}
@@ -215,10 +209,8 @@ class CodeforcesService:
 
                     logger.info(f"Synced {synced}/{len(problems_data)} problems...")
 
-                # ── Step 3: Bulk update tag associations ──────────
                 all_pids = list(problem_id_map.values())
                 if all_pids:
-                    # Delete in chunks to avoid overly long IN clauses
                     for ci in range(0, len(all_pids), 5000):
                         chunk = all_pids[ci : ci + 5000]
                         pids_sql = ", ".join(str(pid) for pid in chunk)
@@ -228,7 +220,6 @@ class CodeforcesService:
                             )
                         )
 
-                # Build and insert tag associations
                 tag_assoc_rows = []
                 for p in problems_data:
                     contest_id = p.get("contestId")
@@ -256,14 +247,12 @@ class CodeforcesService:
                         )
                     logger.info(f"Inserted {len(tag_assoc_rows)} tag associations")
 
-                # Update sync log with success (while still in transaction)
                 await conn.execute(
                     text(
                         f"UPDATE cf_sync_logs SET status = 'success', problems_synced = {synced}, "
                         f"completed_at = now() WHERE id = {sync_log_id}"
                     )
                 )
-            # Transaction commits here automatically
 
             logger.info(
                 f"Successfully synced {synced} problems with {len(tag_assoc_rows)} tag links"
@@ -271,7 +260,6 @@ class CodeforcesService:
             return synced
 
         except Exception as e:
-            # Update sync log with failure
             async with engine.begin() as conn:
                 error_msg = str(e)[:2000].replace("'", "''")
                 await conn.execute(
@@ -283,7 +271,6 @@ class CodeforcesService:
             logger.error(f"Problem sync failed: {e}", exc_info=True)
             raise
 
-    # Keep old methods as unused (bulk versions above replace them)
     async def _bulk_upsert_tags(
         self, db: AsyncSession, tag_names: set[str]
     ) -> dict[str, int]:
@@ -315,7 +302,7 @@ class CodeforcesService:
                     solved.add(f"{contest_id}{index}")
         return solved
 
-    # ── Helpers ──────────────────────────────────────────────────
+
 
     @staticmethod
     def _slugify(name: str) -> str:
@@ -372,5 +359,4 @@ class CodeforcesService:
             return "other"
 
 
-# Singleton-ish for reuse
 cf_service = CodeforcesService()

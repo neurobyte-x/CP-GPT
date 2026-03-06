@@ -53,10 +53,8 @@ class UserProgress(Base):
     time_spent_seconds: Mapped[int] = mapped_column(Integer, default=0)
     hints_used: Mapped[int] = mapped_column(Integer, default=0)
 
-    # Codeforces verdict (if synced)
     cf_verdict: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
-    # Timestamps
     first_attempted_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -64,7 +62,6 @@ class UserProgress(Base):
         DateTime(timezone=True), nullable=True
     )
 
-    # Relationships
     user = relationship("User", back_populates="progress_records")
     problem = relationship("Problem", lazy="selectin")
 
@@ -93,12 +90,10 @@ class UserTopicStats(Base):
     max_rating_solved: Mapped[int] = mapped_column(Integer, default=0)
     estimated_skill: Mapped[int] = mapped_column(Integer, default=800)
 
-    # Timestamps
     last_updated: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    # Relationships
     user = relationship("User", back_populates="topic_stats")
     tag = relationship("Tag", lazy="selectin")
 
@@ -120,7 +115,7 @@ class CFSyncLog(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     sync_type: Mapped[str] = mapped_column(
         String(50), nullable=False
-    )  # "problems", "user_submissions", "contest_list"
+    )
     status: Mapped[SyncStatus] = mapped_column(
         Enum(SyncStatus, values_callable=lambda e: [m.value for m in e]),
         nullable=False,

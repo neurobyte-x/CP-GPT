@@ -7,7 +7,6 @@ from typing import Any, Optional
 from pydantic import BaseModel, Field
 
 
-# ── Request schemas ──────────────────────────────────────────────
 
 
 class ConversationCreate(BaseModel):
@@ -22,7 +21,6 @@ class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1, max_length=5000)
 
 
-# ── Response schemas ─────────────────────────────────────────────
 
 
 class MessageResponse(BaseModel):

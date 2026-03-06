@@ -35,7 +35,6 @@ async def get_coaching(
       - analyze: Post-solve analysis
       - solution: Full solution (use sparingly)
     """
-    # Fetch the problem
     result = await db.execute(
         select(Problem)
         .options(selectinload(Problem.tags))
@@ -45,7 +44,6 @@ async def get_coaching(
     if not problem:
         raise NotFoundException("Problem")
 
-    # Get coaching response
     coaching_result = await coaching_service.get_coaching(
         problem=problem,
         action=payload.action,

@@ -30,7 +30,6 @@ logger = logging.getLogger(__name__)
 class RecommenderService:
     """Deterministic problem recommendation engine."""
 
-    # ── Problem Search ───────────────────────────────────────────
 
     async def search_problems(
         self,
@@ -39,10 +38,10 @@ class RecommenderService:
         tags: Optional[list[str]] = None,
         min_rating: Optional[int] = None,
         max_rating: Optional[int] = None,
-        exclude_solved_by: Optional[str] = None,  # user UUID as str
+        exclude_solved_by: Optional[str] = None,
         min_solved_count: Optional[int] = None,
         search_query: Optional[str] = None,
-        sort_by: str = "educational_score",  # rating, solved_count, educational_score
+        sort_by: str = "educational_score",
         limit: int = 20,
         offset: int = 0,
     ) -> list[dict]:
@@ -53,7 +52,6 @@ class RecommenderService:
         """
         query = select(Problem).options(selectinload(Problem.tags))
 
-        # Tag filter — problem must have ALL requested tags
         if tags:
             for tag_name in tags:
                 tag_subq = (
@@ -63,24 +61,19 @@ class RecommenderService:
                 )
                 query = query.where(Problem.id.in_(tag_subq))
 
-        # Rating range
         if min_rating is not None:
             query = query.where(Problem.rating >= min_rating)
         if max_rating is not None:
             query = query.where(Problem.rating <= max_rating)
 
-        # Only rated problems (exclude unrated)
         query = query.where(Problem.rating.isnot(None))
 
-        # Minimum solved count (proxy for problem quality)
         if min_solved_count is not None:
             query = query.where(Problem.solved_count >= min_solved_count)
 
-        # Text search on problem name
         if search_query:
             query = query.where(Problem.name.ilike(f"%{search_query}%"))
 
-        # Exclude solved problems
         if exclude_solved_by:
             solved_subq = select(UserProgress.problem_id).where(
                 and_(
@@ -90,20 +83,15 @@ class RecommenderService:
             )
             query = query.where(Problem.id.notin_(solved_subq))
 
-        # Sorting
         if sort_by == "rating":
             query = query.order_by(Problem.rating.asc(), Problem.solved_count.desc())
         elif sort_by == "solved_count":
             query = query.order_by(Problem.solved_count.desc())
         elif sort_by == "educational_score":
-            # Sort by: problems with moderate solve counts are better for learning
-            # (very popular = too easy, very unpopular = obscure/bad)
-            # Use rating ASC as primary, solved_count DESC as tiebreaker
             query = query.order_by(Problem.rating.asc(), Problem.solved_count.desc())
         else:
             query = query.order_by(Problem.rating.asc())
 
-        # Pagination
         query = query.offset(offset).limit(limit)
 
         result = await db.execute(query)
@@ -150,7 +138,6 @@ class RecommenderService:
         Find problems similar to a given problem.
         Similarity = Jaccard index on tags + rating proximity.
         """
-        # Get the reference problem
         ref_result = await db.execute(
             select(Problem)
             .options(selectinload(Problem.tags))
@@ -163,7 +150,6 @@ class RecommenderService:
         ref_tag_ids = {t.id for t in ref.tags}
         ref_rating = ref.rating or 1200
 
-        # Get candidate problems with overlapping tags
         if ref_tag_ids:
             candidates_query = (
                 select(Problem)
@@ -180,10 +166,9 @@ class RecommenderService:
                         ),
                     )
                 )
-                .limit(200)  # Fetch more, rank locally
+                .limit(200)
             )
         else:
-            # No tags — just use rating proximity
             candidates_query = (
                 select(Problem)
                 .options(selectinload(Problem.tags))
@@ -197,7 +182,6 @@ class RecommenderService:
                 .limit(200)
             )
 
-        # Exclude solved
         if exclude_solved_by:
             solved_subq = select(UserProgress.problem_id).where(
                 and_(
@@ -210,17 +194,14 @@ class RecommenderService:
         result = await db.execute(candidates_query)
         candidates = result.scalars().unique().all()
 
-        # Rank by similarity
         scored = []
         for p in candidates:
             p_tag_ids = {t.id for t in p.tags}
-            # Jaccard similarity on tags
             if ref_tag_ids or p_tag_ids:
                 jaccard = len(ref_tag_ids & p_tag_ids) / len(ref_tag_ids | p_tag_ids)
             else:
                 jaccard = 0.0
 
-            # Rating proximity (0-1, 1 = same rating)
             p_rating = p.rating or 1200
             rating_sim = max(0, 1 - abs(ref_rating - p_rating) / 500)
 
@@ -230,13 +211,11 @@ class RecommenderService:
         scored.sort(key=lambda x: x[0], reverse=True)
         return [self._problem_to_dict(p) for _, p in scored[:limit]]
 
-    # ── User Analysis Queries ────────────────────────────────────
 
     async def get_user_stats_summary(self, db: AsyncSession, user_id: str) -> dict:
         """
         Get a summary of the user's solving stats for the agent.
         """
-        # Total solved/attempted
         solved_count = await db.execute(
             select(sqlfunc.count()).where(
                 and_(
@@ -249,7 +228,6 @@ class RecommenderService:
             select(sqlfunc.count()).where(UserProgress.user_id == user_id)
         )
 
-        # Rating distribution of solved
         rating_dist = await db.execute(
             select(
                 ((Problem.rating / 100) * 100).label("bucket"),
@@ -352,7 +330,7 @@ class RecommenderService:
         result = await db.execute(select(Tag.name).order_by(Tag.name))
         return list(result.scalars().all())
 
-    # ── Helpers ──────────────────────────────────────────────────
+
 
     def _problem_to_dict(self, p: Problem) -> dict:
         """Convert a Problem ORM object to a plain dict for the agent."""
@@ -369,5 +347,4 @@ class RecommenderService:
         }
 
 
-# Singleton
 recommender = RecommenderService()

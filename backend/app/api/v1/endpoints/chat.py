@@ -49,7 +49,6 @@ async def list_conversations(
     )
     conversations = result.scalars().all()
 
-    # Build response with message count and preview
     response = []
     for conv in conversations:
         msg_count = len(conv.messages) if conv.messages else 0
@@ -218,7 +217,6 @@ async def send_message(
     Send a message in a conversation.
     The AI agent processes it and returns a reply.
     """
-    # Verify conversation belongs to user
     result = await db.execute(
         select(Conversation)
         .options(selectinload(Conversation.messages))
@@ -233,7 +231,6 @@ async def send_message(
     if not conv:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
-    # Save the user message
     user_msg = Message(
         conversation_id=conv.id,
         role="user",
@@ -243,22 +240,18 @@ async def send_message(
     await db.flush()
     await db.refresh(user_msg)
 
-    # Auto-generate title from first message
     if conv.title == "New Conversation":
         conv.title = body.message[:60].strip()
         if len(body.message) > 60:
             conv.title += "..."
 
-    # Build conversation history (last 20 messages for context)
     history = []
     recent_messages = (conv.messages or [])[-20:]
     for m in recent_messages:
-        # Skip the message we just added (it's passed separately)
         if m.id == user_msg.id:
             continue
         history.append({"role": m.role, "content": m.content})
 
-    # Run the agent
     try:
         agent_result = await agent_service.process_message(
             db=db,
@@ -273,7 +266,6 @@ async def send_message(
             "metadata": None,
         }
 
-    # Save the assistant message
     assistant_msg = Message(
         conversation_id=conv.id,
         role="assistant",

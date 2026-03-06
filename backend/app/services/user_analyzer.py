@@ -45,19 +45,16 @@ class UserAnalyzerService:
         }
 
         try:
-            # 1. Fetch user info from CF
             cf_info = await cf_service.fetch_user_info(user.cf_handle)
             user.estimated_rating = cf_info.get("rating")
             user.cf_max_rating = cf_info.get("maxRating")
             user.cf_last_synced = datetime.now(timezone.utc)
             summary["rating_updated"] = True
 
-            # 2. Fetch and process submissions
             submissions = await cf_service.fetch_user_submissions(user.cf_handle)
             synced = await self._process_submissions(db, user, submissions)
             summary["problems_synced"] = synced
 
-            # 3. Recalculate topic stats
             await self._recalculate_topic_stats(db, user)
             summary["topic_stats_updated"] = True
 
@@ -74,7 +71,6 @@ class UserAnalyzerService:
         Process CF submissions into UserProgress records.
         Only tracks best verdict per problem.
         """
-        # Group submissions by problem
         best_per_problem: dict[str, dict] = {}
         for sub in submissions:
             problem = sub.get("problem", {})
@@ -91,14 +87,12 @@ class UserAnalyzerService:
             elif verdict == "OK" and best_per_problem[key].get("verdict") != "OK":
                 best_per_problem[key] = sub
 
-        # Look up local problem IDs
         synced = 0
         for key, sub in best_per_problem.items():
             problem = sub.get("problem", {})
             contest_id = problem.get("contestId")
             index = problem.get("index")
 
-            # Find local problem
             result = await db.execute(
                 select(Problem).where(
                     and_(
@@ -111,7 +105,6 @@ class UserAnalyzerService:
             if not local_problem:
                 continue
 
-            # Upsert progress
             result = await db.execute(
                 select(UserProgress).where(
                     and_(
@@ -155,7 +148,6 @@ class UserAnalyzerService:
         """
         Recalculate per-topic statistics for a user based on their progress records.
         """
-        # Get all solved problems with their tags
         result = await db.execute(
             select(UserProgress, Problem)
             .join(Problem, UserProgress.problem_id == Problem.id)
@@ -168,7 +160,6 @@ class UserAnalyzerService:
         )
         rows = result.all()
 
-        # Aggregate by tag
         tag_stats: dict[int, dict] = defaultdict(
             lambda: {
                 "solved": 0,
@@ -187,7 +178,6 @@ class UserAnalyzerService:
                         stats["ratings"].append(problem.rating)
                         stats["max_rating"] = max(stats["max_rating"], problem.rating)
 
-        # Count attempted but unsolved
         attempted_result = await db.execute(
             select(UserProgress, Problem)
             .join(Problem, UserProgress.problem_id == Problem.id)
@@ -203,7 +193,6 @@ class UserAnalyzerService:
                 for tag in problem.tags:
                     tag_stats[tag.id]["attempted"] += 1
 
-        # Upsert topic stats
         for tag_id, stats in tag_stats.items():
             avg_rating = (
                 sum(stats["ratings"]) / len(stats["ratings"]) if stats["ratings"] else 0
@@ -254,20 +243,16 @@ class UserAnalyzerService:
         sorted_ratings = sorted(ratings)
         n = len(sorted_ratings)
 
-        # 75th percentile
         p75_idx = min(int(n * 0.75), n - 1)
         baseline = sorted_ratings[p75_idx]
 
-        # Volume bonus: log-scaled, max +200
         volume_bonus = min(int(math.log(n + 1) * 40), 200)
 
-        # Consistency bonus: if max is much higher than median, skill is volatile
         median = sorted_ratings[n // 2]
         max_rating = sorted_ratings[-1]
         consistency_penalty = max(0, (max_rating - median) // 4)
 
         estimated = baseline + volume_bonus - consistency_penalty
-        # Clamp to valid rating range
         return max(800, min(3500, estimated))
 
     async def get_user_solved_problem_ids(self, db: AsyncSession, user_id) -> set[int]:
@@ -284,7 +269,6 @@ class UserAnalyzerService:
 
     async def get_dashboard_data(self, db: AsyncSession, user: User) -> dict:
         """Compile dashboard statistics for a user."""
-        # Total solved
         solved_count = await db.execute(
             select(sqlfunc.count()).where(
                 and_(
@@ -295,13 +279,11 @@ class UserAnalyzerService:
         )
         total_solved = solved_count.scalar_one()
 
-        # Total attempted
         attempted_count = await db.execute(
             select(sqlfunc.count()).where(UserProgress.user_id == user.id)
         )
         total_attempted = attempted_count.scalar_one()
 
-        # Total time spent
         time_result = await db.execute(
             select(sqlfunc.sum(UserProgress.time_spent_seconds)).where(
                 UserProgress.user_id == user.id
@@ -309,7 +291,6 @@ class UserAnalyzerService:
         )
         total_time_seconds = time_result.scalar_one() or 0
 
-        # Active and completed paths
         active_paths_count = await db.execute(
             select(sqlfunc.count()).where(
                 and_(
@@ -327,7 +308,6 @@ class UserAnalyzerService:
             )
         )
 
-        # Topic stats
         topic_stats_result = await db.execute(
             select(UserTopicStats)
             .where(UserTopicStats.user_id == user.id)
@@ -335,7 +315,6 @@ class UserAnalyzerService:
         )
         topic_stats = topic_stats_result.scalars().all()
 
-        # Rating distribution of solved problems
         rating_dist_result = await db.execute(
             select(
                 ((Problem.rating / 100) * 100).label("bucket"),
@@ -356,7 +335,6 @@ class UserAnalyzerService:
             str(row.bucket): row.count for row in rating_dist_result.all()
         }
 
-        # Recent solves (last 10)
         recent_result = await db.execute(
             select(UserProgress)
             .where(
@@ -376,7 +354,7 @@ class UserAnalyzerService:
             "total_time_spent_hours": round(total_time_seconds / 3600, 1),
             "active_paths": active_paths_count.scalar_one(),
             "completed_paths": completed_paths_count.scalar_one(),
-            "current_streak_days": 0,  # TODO: calculate from daily activity
+            "current_streak_days": 0,
             "estimated_rating": user.estimated_rating,
             "topic_stats": topic_stats,
             "recent_solves": recent_solves,
@@ -408,5 +386,4 @@ class UserAnalyzerService:
         ]
 
 
-# Singleton
 user_analyzer = UserAnalyzerService()

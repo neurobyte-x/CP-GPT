@@ -57,7 +57,7 @@ export default function AppLayout() {
         </div>
         {!collapsed && (
           <span className="text-base font-bold">
-            CPCoach<span className="text-primary">.ai</span>
+            Cp-GPT<span className="text-primary">.ai</span>
           </span>
         )}
       </div>

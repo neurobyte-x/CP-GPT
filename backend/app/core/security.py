@@ -17,7 +17,6 @@ from app.config import get_settings
 settings = get_settings()
 
 
-# ── Password hashing (kept for backwards compat / custom use) ────
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
@@ -28,7 +27,6 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     )
 
 
-# ── JWT Tokens (kept for potential custom use / scripts) ─────────
 def create_access_token(user_id: uuid.UUID) -> str:
     expires = datetime.now(timezone.utc) + timedelta(
         minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES

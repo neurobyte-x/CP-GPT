@@ -32,7 +32,6 @@ class BackgroundScheduler:
         self._running = True
         logger.info("Background scheduler starting...")
 
-        # Schedule periodic CF sync
         self._tasks.append(
             asyncio.create_task(
                 self._periodic_task(
@@ -82,7 +81,6 @@ class BackgroundScheduler:
                 break
             except Exception as e:
                 logger.error(f"Scheduled task {name} failed: {e}")
-                # Wait a bit before retrying on failure
                 await asyncio.sleep(60)
 
     @staticmethod
@@ -92,5 +90,4 @@ class BackgroundScheduler:
         await sync_codeforces_problems()
 
 
-# Singleton
 scheduler = BackgroundScheduler()

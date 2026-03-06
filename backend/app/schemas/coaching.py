@@ -38,5 +38,5 @@ class CoachingResponse(BaseModel):
     hint_level: Optional[int] = None
     follow_up_suggestions: list[str] = []
     warning: Optional[str] = (
-        None  # e.g., "This reveals significant detail about the solution"
+        None
     )

@@ -30,7 +30,7 @@ from app.models.user import User
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
-# ── System Prompt ────────────────────────────────────────────────
+
 
 SYSTEM_PROMPT = """\
 You are an expert competitive programming coach embedded in the CP Path Builder platform. \
@@ -68,7 +68,7 @@ Your job is to help users improve at competitive programming through personalize
 - User ID (for tool calls): {user_id}
 """
 
-# ── Tool Declarations (Gemini function calling format) ───────────
+
 
 TOOL_DECLARATIONS = [
     {
@@ -236,7 +236,6 @@ TOOL_DECLARATIONS = [
     },
 ]
 
-# Max tool-call iterations per request
 MAX_AGENT_ITERATIONS = 5
 
 
@@ -286,7 +285,6 @@ class AgentService:
 
         client = await self._get_client()
 
-        # Build system prompt with user context
         system_prompt = SYSTEM_PROMPT.format(
             username=user.username,
             cf_handle=user.cf_handle or "Not linked",
@@ -294,10 +292,8 @@ class AgentService:
             user_id=str(user.id),
         )
 
-        # Build conversation contents for Gemini
         contents = self._build_contents(conversation_history, user_message)
 
-        # Build tool config
         tools = types.Tool(
             function_declarations=[
                 types.FunctionDeclaration(
@@ -309,7 +305,6 @@ class AgentService:
             ]
         )
 
-        # Agent loop
         tool_call_log = []
         collected_problems = []
         final_text = ""
@@ -337,7 +332,6 @@ class AgentService:
                     "metadata": None,
                 }
 
-            # Check if response has function calls
             candidate = response.candidates[0] if response.candidates else None
             if not candidate or not candidate.content or not candidate.content.parts:
                 return {
@@ -345,7 +339,6 @@ class AgentService:
                     "metadata": None,
                 }
 
-            # Separate text parts and function call parts
             text_parts.clear()
             function_calls = []
             for part in candidate.content.parts:
@@ -355,11 +348,9 @@ class AgentService:
                     text_parts.append(part.text)
 
             if not function_calls:
-                # No more tool calls — we have the final text response
                 final_text = "\n".join(text_parts) if text_parts else ""
                 break
 
-            # Execute function calls and collect results
             function_response_parts = []
             for fc in function_calls:
                 tool_name = fc.name
@@ -367,12 +358,10 @@ class AgentService:
 
                 logger.info(f"Agent tool call: {tool_name}({tool_args})")
 
-                # Execute the tool
                 tool_result = await self._execute_tool(
                     db, tool_name, tool_args, str(user.id)
                 )
 
-                # Track for metadata
                 tool_call_log.append(
                     {
                         "tool": tool_name,
@@ -383,7 +372,6 @@ class AgentService:
                     }
                 )
 
-                # Collect problems from results for UI cards
                 if isinstance(tool_result, list):
                     for item in tool_result:
                         if isinstance(item, dict) and "contest_id" in item:
@@ -391,7 +379,6 @@ class AgentService:
                 elif isinstance(tool_result, dict) and "contest_id" in tool_result:
                     collected_problems.append(tool_result)
 
-                # Build function response part
                 function_response_parts.append(
                     types.Part(
                         function_response=types.FunctionResponse(
@@ -401,9 +388,7 @@ class AgentService:
                     )
                 )
 
-            # Add model's response (with function calls) to contents
             contents.append(candidate.content)
-            # Add function results to contents
             contents.append(
                 types.Content(
                     role="user",
@@ -411,7 +396,6 @@ class AgentService:
                 )
             )
         else:
-            # Hit max iterations
             final_text = (
                 "\n".join(text_parts)
                 if text_parts
@@ -420,7 +404,6 @@ class AgentService:
                 )
             )
 
-        # Deduplicate problems by ID
         seen_ids = set()
         unique_problems = []
         for p in collected_problems:
@@ -449,7 +432,6 @@ class AgentService:
 
         for msg in history:
             role = msg["role"]
-            # Gemini uses "user" and "model" roles
             gemini_role = "model" if role == "assistant" else "user"
             contents.append(
                 types.Content(
@@ -458,7 +440,6 @@ class AgentService:
                 )
             )
 
-        # Add the new user message
         contents.append(
             types.Content(
                 role="user",
@@ -480,7 +461,6 @@ class AgentService:
 
         try:
             if tool_name == "search_problems":
-                # Clamp limit
                 limit = min(args.get("limit", 10), 20)
                 return await recommender.search_problems(
                     db,
@@ -538,5 +518,4 @@ class AgentService:
             return {"error": f"Tool failed: {str(e)}"}
 
 
-# Singleton
 agent_service = AgentService()

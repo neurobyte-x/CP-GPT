@@ -42,19 +42,16 @@ async def list_problems(
     """Browse and filter the problem database."""
     query = select(Problem).options(selectinload(Problem.tags))
 
-    # Tag filter
     if tags:
         tag_slugs = [t.strip() for t in tags.split(",") if t.strip()]
         if tag_slugs:
             query = query.join(Problem.tags).where(Tag.slug.in_(tag_slugs))
 
-    # Rating filter
     if min_rating is not None:
         query = query.where(Problem.rating >= min_rating)
     if max_rating is not None:
         query = query.where(Problem.rating <= max_rating)
 
-    # Text search
     if search:
         query = query.where(
             or_(
@@ -63,7 +60,6 @@ async def list_problems(
             )
         )
 
-    # Exclude solved problems for authenticated users
     if exclude_solved and current_user:
         solved_subq = (
             select(UserProgress.problem_id)
@@ -77,22 +73,18 @@ async def list_problems(
         )
         query = query.where(Problem.id.notin_(solved_subq))
 
-    # Deduplicate
     query = query.distinct()
 
-    # Count total
     count_query = select(sqlfunc.count()).select_from(query.subquery())
     total_result = await db.execute(count_query)
     total = total_result.scalar_one()
 
-    # Sorting
     sort_column = getattr(Problem, sort_by, Problem.rating)
     if sort_order == "desc":
         query = query.order_by(sort_column.desc().nulls_last())
     else:
         query = query.order_by(sort_column.asc().nulls_last())
 
-    # Pagination
     offset = (page - 1) * page_size
     query = query.offset(offset).limit(page_size)
 

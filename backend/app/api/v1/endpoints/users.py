@@ -30,7 +30,6 @@ async def update_me(
     """Update the current user's profile."""
     update_data = payload.model_dump(exclude_unset=True)
 
-    # Remove fastapi-users internal fields that shouldn't be set via this endpoint
     for field in ("password", "email", "is_active", "is_superuser", "is_verified"):
         update_data.pop(field, None)
 

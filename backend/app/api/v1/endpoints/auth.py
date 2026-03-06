@@ -8,8 +8,5 @@ We also add a custom /auth/me endpoint for convenience.
 
 from fastapi import APIRouter
 
-# This file is intentionally minimal.
-# The actual auth routers are included in router.py from core.users.
-# Keeping this file so imports don't break, but it has no routes of its own.
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])

@@ -24,7 +24,6 @@ from app.tasks.scheduler import scheduler
 
 settings = get_settings()
 
-# ── Logging ──────────────────────────────────────────────────────
 logging.basicConfig(
     level=logging.DEBUG if settings.DEBUG else logging.INFO,
     format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
@@ -33,31 +32,26 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# ── Lifespan ─────────────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown lifecycle management."""
     logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION}")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
 
-    # Initialize database tables (dev only; use Alembic in production)
     if settings.ENVIRONMENT == "development":
         await init_db()
         logger.info("Database tables created/verified")
 
-    # Start background scheduler
     await scheduler.start()
 
     yield
 
-    # Shutdown
     logger.info("Shutting down...")
     await scheduler.stop()
     await close_db()
     logger.info("Shutdown complete")
 
 
-# ── Application Factory ─────────────────────────────────────────
 def create_app() -> FastAPI:
     app = FastAPI(
         title=settings.APP_NAME,
@@ -71,7 +65,6 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # ── Middleware ────────────────────────────────────────────
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.ALLOWED_ORIGINS,
@@ -80,10 +73,8 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # ── Routes ───────────────────────────────────────────────
     app.include_router(v1_router)
 
-    # ── Health Check ─────────────────────────────────────────
     @app.get("/health", tags=["System"])
     async def health_check():
         return {
@@ -93,7 +84,6 @@ def create_app() -> FastAPI:
             "environment": settings.ENVIRONMENT,
         }
 
-    # ── Admin: Trigger Sync ──────────────────────────────────
     @app.post("/admin/sync-problems", tags=["Admin"])
     async def trigger_sync():
         """Manually trigger a Codeforces problem sync (admin only)."""
@@ -103,7 +93,6 @@ def create_app() -> FastAPI:
         asyncio.create_task(sync_codeforces_problems())
         return {"message": "Problem sync started in background"}
 
-    # ── Global Exception Handler ─────────────────────────────
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception):
         logger.error(f"Unhandled exception: {exc}", exc_info=True)
