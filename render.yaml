@@ -2,7 +2,6 @@ services:
   - type: web
     name: cp-gpt
     runtime: docker
-    dockerfilePath: backend/Dockerfile
     plan: starter
     healthCheckPath: /health
     healthCheckTimeout: 10
