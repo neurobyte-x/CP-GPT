@@ -1,5 +1,14 @@
+# ── Frontend Build ───────────────────────────────────────────────
+FROM node:20-alpine AS frontend_build
+
+WORKDIR /frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+COPY frontend/ .
+RUN npm run build
+
 # ── Backend ──────────────────────────────────────────────────────
-FROM python:3.12-slim AS backend
+FROM python:3.12-slim
 
 WORKDIR /app
 
@@ -10,10 +19,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 
 # Copy dependency files first for layer caching
-COPY pyproject.toml uv.lock ./
+COPY backend/pyproject.toml backend/uv.lock ./
 RUN uv sync --frozen --no-dev
 
-COPY . .
+COPY backend/ .
+
+# Copy built frontend dist into backend
+COPY --from=frontend_build /frontend/dist ./frontend/dist
 
 EXPOSE 8000
 

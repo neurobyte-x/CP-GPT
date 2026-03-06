@@ -13,9 +13,12 @@ Production-ready application with:
 import logging
 from contextlib import asynccontextmanager
 
+from pathlib import Path
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.v1.router import router as v1_router
 from app.config import get_settings
@@ -74,6 +77,14 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(v1_router)
+
+    # Serve frontend static files
+    frontend_dist = Path(__file__).parent.parent.parent / "frontend" / "dist"
+    if frontend_dist.exists():
+        app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="static")
+        logger.info(f"Mounted frontend static files from {frontend_dist}")
+    else:
+        logger.warning(f"Frontend dist directory not found at {frontend_dist}")
 
     @app.get("/health", tags=["System"])
     async def health_check():
