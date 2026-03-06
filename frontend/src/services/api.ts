@@ -29,7 +29,16 @@ import type {
   UserProgress,
 } from '@/types';
 
-const BASE_URL = '/api/v1';
+// Build BASE_URL: use environment variable if available, otherwise use relative path
+const getBaseUrl = () => {
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+  if (apiBaseUrl && apiBaseUrl.startsWith('http')) {
+    return `${apiBaseUrl}/api/v1`;
+  }
+  return '/api/v1';
+};
+
+const BASE_URL = getBaseUrl();
 
 class ApiClient {
   private client: AxiosInstance;

@@ -1,0 +1,10 @@
+backend
+docker-compose.yml
+Dockerfile
+alembic.ini
+requirements.txt
+*.md
+.git
+.gitignore
+.env
+node_modules
