@@ -46,11 +46,11 @@ class Settings(BaseSettings):
 
     GEMINI_API_KEY: Optional[str] = None
     LLM_MODEL: str = "gemini-2.5-flash"
-    LLM_MAX_TOKENS: int = 1024
-    LLM_TEMPERATURE: float = 0.3
+    LLM_MAX_TOKENS: int = 2048
+    LLM_TEMPERATURE: float = 0.6
     COACHING_ENABLED: bool = True
 
-    SYNC_ON_STARTUP: bool = True
+    SYNC_ON_STARTUP: bool = False
     TASK_CONCURRENCY: int = 4
 
     DEFAULT_PATH_SIZE: int = 30

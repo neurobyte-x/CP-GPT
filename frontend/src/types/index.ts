@@ -94,7 +94,7 @@ export interface DashboardStats {
   current_streak_days: number;
   estimated_rating: number | null;
   topic_stats: TopicStats[];
-  recent_solves: UserProgress[];
+  recent_solves: RecentSolve[];
   rating_distribution: Record<string, number>;
 }
 
@@ -108,6 +108,12 @@ export interface UserProgress {
   cf_verdict: string | null;
   first_attempted_at: string;
   solved_at: string | null;
+}
+
+export interface RecentSolve extends UserProgress {
+  problem_name: string;
+  contest_id: number | null;
+  problem_index: string | null;
 }
 
 export interface CoachingRequest {
@@ -241,4 +247,32 @@ export function getRatingBadgeColor(rating: number | null): string {
   if (rating < 2100) return 'bg-purple-100 text-purple-700';
   if (rating < 2400) return 'bg-orange-100 text-orange-700';
   return 'bg-red-100 text-red-700';
+}
+
+export function getRatingTier(rating: number | null): string {
+  if (rating === null) return 'Unrated';
+  if (rating < 1200) return 'Newbie';
+  if (rating < 1400) return 'Pupil';
+  if (rating < 1600) return 'Specialist';
+  if (rating < 1900) return 'Expert';
+  if (rating < 2100) return 'Candidate Master';
+  if (rating < 2300) return 'Master';
+  if (rating < 2400) return 'International Master';
+  if (rating < 2600) return 'Grandmaster';
+  if (rating < 3000) return 'International Grandmaster';
+  return 'Legendary Grandmaster';
+}
+
+export function getRatingTierColor(rating: number | null): string {
+  if (rating === null) return '#6b7280';
+  if (rating < 1200) return '#9ca3af';
+  if (rating < 1400) return '#22c55e';
+  if (rating < 1600) return '#06b6d4';
+  if (rating < 1900) return '#3b82f6';
+  if (rating < 2100) return '#a855f7';
+  if (rating < 2300) return '#f97316';
+  if (rating < 2400) return '#f97316';
+  if (rating < 2600) return '#ef4444';
+  if (rating < 3000) return '#dc2626';
+  return '#b91c1c';
 }

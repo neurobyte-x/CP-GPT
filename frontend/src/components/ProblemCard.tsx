@@ -1,10 +1,13 @@
 /**
  * ProblemCard — compact inline card for Codeforces problems (dark theme).
  * Used inside chat messages when the AI returns problem recommendations.
+ * Includes a "Copy URL" button for quick sharing.
  */
 
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Copy, Check } from 'lucide-react';
+import { useState } from 'react';
 import type { ChatProblem } from '@/types';
+import { toast } from 'sonner';
 
 function ratingColor(r: number | null): string {
   if (r === null) return 'text-gray-400';
@@ -21,6 +24,21 @@ interface ProblemCardProps {
 }
 
 export default function ProblemCard({ problem }: ProblemCardProps) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyUrl = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(problem.url);
+      setCopied(true);
+      toast.success('Problem URL copied!');
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error('Failed to copy URL');
+    }
+  };
+
   return (
     <a
       href={problem.url}
@@ -61,7 +79,20 @@ export default function ProblemCard({ problem }: ProblemCardProps) {
             </div>
           )}
         </div>
-        <ExternalLink className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary flex-shrink-0 mt-1" />
+        <div className="flex items-center gap-1.5 flex-shrink-0 mt-1">
+          <button
+            onClick={handleCopyUrl}
+            className="p-1 rounded hover:bg-accent transition-colors"
+            title="Copy problem URL"
+          >
+            {copied ? (
+              <Check className="w-3.5 h-3.5 text-green-400" />
+            ) : (
+              <Copy className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
+            )}
+          </button>
+          <ExternalLink className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary" />
+        </div>
       </div>
       {problem.solved_count > 0 && (
         <div className="text-xs text-muted-foreground mt-1.5">

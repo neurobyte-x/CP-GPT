@@ -1157,9 +1157,9 @@ export default function LandingPage() {
                 The autonomous AI coaching platform for competitive programmers. Train smarter, rank higher.
               </p>
               <div className="flex items-center gap-3 mt-4">
-                <a href="#" className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"><Github className="w-4 h-4" /></a>
-                <a href="#" className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"><Twitter className="w-4 h-4" /></a>
-                <a href="#" className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"><MessageSquare className="w-4 h-4" /></a>
+                <a href="https://github.com/neurobyte-x" className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"><Github className="w-4 h-4" /></a>
+                <a href="https://x.com/soorajhegde323" className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"><Twitter className="w-4 h-4" /></a>
+                <a href="https://www.linkedin.com/in/sooraj-hegde" className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"><MessageSquare className="w-4 h-4" /></a>
               </div>
             </div>
             <div>

@@ -1,0 +1,141 @@
+High-Level Purpose
+This system builds personalized competitive programming practice paths from Codeforces data, then augments practice with AI coaching and chat-based guidance.
+The core goal is to move users from ad-hoc problem solving to structured progression: select problems by topic/rating, track outcomes, estimate strengths/weaknesses, and provide contextual hints/recommendations.
+Evidence in code:
+path_generator.py,
+user_analyzer.py,
+agent.py,
+paths.py.
+Architecture Overview
+Major components:
+
+Backend API: FastAPI app with lifecycle hooks, routing, CORS, health/admin endpoints in main.py.
+
+Auth subsystem: FastAPI-Users JWT auth in users.py and routed via router.py.
+
+Database: PostgreSQL via async SQLAlchemy models/sessions in database.py, models in models.
+
+Data ingestion: Codeforces sync service and background scheduler in codeforces.py, scheduler.py, cf_sync.py.
+
+Personalization logic: user/topic analytics and path generation in user_analyzer.py, path_generator.py, recommender.py.
+
+AI layer: coaching endpoint + agentic chat (Gemini function calling) in coaching.py, agent.py.
+
+Frontend: React/Vite SPA consuming /api/v1 in api.ts.
+
+Cache/queue infra: Redis is provisioned in render.yaml and docker-compose.yml, but not actually used in backend runtime logic.
+
+Deployment packaging: single container builds frontend and serves it from backend static mount in Dockerfile, main.py.
+
+Interaction flow (text):
+
+Browser SPA -> /api/v1 endpoints -> FastAPI dependencies (auth + db session) -> service layer (path/coaching/agent/recommender/analyzer) -> PostgreSQL.
+
+For sync and profile enrichment: service layer -> Codeforces HTTP API -> normalized writes to PostgreSQL.
+
+For AI operations: chat/coaching services -> Gemini API -> response persisted (messages/metadata) -> API response to frontend.
+
+Core Request Flow (Step-by-step)
+Typical authenticated request (example: create path via POST /api/v1/paths):
+Request enters FastAPI app in main.py, routed by router.py.
+Auth dependency resolves current active user through FastAPI-Users in deps.py and users.py.
+DB session dependency opens AsyncSession in database.py.
+Endpoint validates payload and basic constraints in paths.py.
+Service layer pulls solved-problem exclusions via user_analyzer.py, generates ordered problem sequence via path_generator.py, and writes PracticePath + PathProblem rows.
+Endpoint serializes response using Pydantic schemas in path.py.
+Session dependency commits on success or rolls back on exception in database.py, then response is returned.
+Key Modules & Responsibilities
+main.py: app bootstrapping, middleware, exception handling, scheduler startup/shutdown, health/admin endpoints, static frontend serving.
+config.py: centralized environment settings and parsing (including origin parsing).
+database.py: async engine/session factory, commit/rollback session lifecycle.
+users.py: JWT strategy, user manager hooks, auth backends, current-user dependencies.
+paths.py: path CRUD, forced/unlocked progression, solved/skip actions.
+problems.py: problem search/filter/sort/pagination + tags.
+progress.py: progress listing and summary/topic statistics.
+users.py: profile update, dashboard aggregation, manual CF sync trigger.
+chat.py: conversation lifecycle + message send, agent invocation, message persistence.
+path_generator.py: core algorithm for banded problem selection and ordered path composition.
+recommender.py: deterministic filtering/ranking APIs used by agent tools.
+agent.py: Gemini function-calling loop and tool dispatcher.
+coaching.py: action-based coaching (explain/hint/approach/pitfalls/analyze/solution) with hint ladder control.
+user_analyzer.py: CF submission ingestion into local progress + topic skill estimates + streak/dashboard metrics.
+codeforces.py: CF API client, rate-limited requests, bulk sync into local DB with sync logs.
+scheduler.py, cf_sync.py: periodic sync orchestration and retry/backoff.
+versions: schema and index migrations.
+Key Technical Decisions
+FastAPI + async SQLAlchemy:
+Chosen for async I/O (DB + external API + LLM calls), clean dependency injection, and typed API schemas. Implemented in main.py, database.py.
+FastAPI-Users for auth:
+Avoids custom auth plumbing, provides login/register JWT routes and current-user dependencies. See users.py, router.py.
+Local Codeforces cache in PostgreSQL:
+Problem/tag data is denormalized locally for fast search/recommendation and solved-exclusion queries. See problem.py, codeforces.py.
+Agent-tool architecture for chat:
+LLM does not directly hallucinate problem lists; it calls DB-backed tools for retrieval and user-context grounding. Implemented in agent.py.
+Background sync with lightweight asyncio scheduler:
+Simple in-process periodic jobs were used instead of Celery/ARQ to keep ops minimal initially. See scheduler.py.
+Redis included but currently unused:
+Configured in environment/deploy, but no backend runtime code reads/writes Redis. Indicates planned caching/queue support not yet integrated.
+Critical Logic (Deep Dive)
+Most important logic: practice path generation pipeline in path_generator.py.
+
+Why critical:
+It defines the platform’s core value proposition: structured, progression-aware practice selection rather than random browsing.
+
+Step-by-step behavior:
+
+Fetch candidate problems filtered by rating range, selected topics, and solved exclusions.
+
+Partition candidates into rating bands with configurable step size.
+
+Compute per-band quotas from selected mode:
+learning favors easier bands, revision is uniform, challenge favors harder bands.
+
+Rank each band using educational score (solved_count signal + rating presence + tag richness).
+
+Select from each band with weighted sampling to keep quality and diversity.
+
+Order final set by smooth difficulty progression and create persistent path entries (initial unlock state supports forced mode).
+
+Pseudo-code:
+
+Secondary critical logic: chat agent loop in agent.py.
+Iteratively calls Gemini; if model returns function calls, execute internal tools (search/stats/similarity/etc.), feed results back, repeat up to MAX_AGENT_ITERATIONS, then persist assistant message + metadata.
+Edge Cases & Handling
+External API failures (Codeforces, Gemini):
+Handled with custom exceptions, retries for sync tasks, and fallback user-facing errors.
+Files: codeforces.py, cf_sync.py, agent.py, coaching.py.
+DB transaction safety:
+Session dependency commits on success and rolls back on failure for each request.
+File: database.py.
+Invalid payloads and missing resources:
+Pydantic validation and explicit NotFound/BadRequest exceptions.
+Files: schemas, exceptions.py, endpoints under endpoints.
+Request abuse:
+Chat send-message has explicit 10/minute limiter.
+File: chat.py.
+Forced path sequencing:
+Locked problems cannot be solved/skipped until prior progression unlocks.
+File: paths.py.
+Important risk gaps observed:
+Concurrency/race risk in solve/skip updates (no explicit row locking/version checks in path progression updates).
+Redis/cache is configured but absent from logic, so repeated expensive reads/LLM context fetches are uncached.
+Migration drift risk: current models include conversations/messages and FastAPI-Users fields, but initial migration does not define conversation tables and uses is_admin instead of is_superuser/is_verified; later index migration references messages table.
+Files: 001_initial.py, 002_add_composite_indexes.py, user.py, conversation.py.
+Potential Improvements
+Fix schema/migration consistency first:
+Generate new Alembic revisions to align models and DB schema (users auth fields, conversations/messages, indexes).
+Harden path progression writes:
+Use row-level locking or optimistic concurrency for solve/skip in forced mode to prevent duplicate/unordered unlock transitions under concurrent requests.
+Introduce real background worker architecture:
+Move periodic and manual sync jobs to Celery/ARQ with distributed locks and job observability.
+Actually integrate Redis:
+Use it for hot query caches (tags/problem lists/topic stats) and possibly rate-limit state for multi-instance deployments.
+Improve security posture:
+Remove disabled SSL verification for DB connections and tighten production CORS defaults.
+Files: database.py, render.yaml.
+Add stronger observability:
+Structured request IDs, metrics (latency, tool-call counts, sync durations), and tracing for LLM/tool loops.
+Add test coverage around core algorithms:
+Property-style tests for band quotas/order guarantees and integration tests for path forced-mode transitions and agent tool dispatch behavior.
+Stabilize search quality:
+Replace simple educational ranking with calibrated scoring (topic weakness weighting, recency decay, adaptive difficulty bands per user skill trend).

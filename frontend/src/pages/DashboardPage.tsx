@@ -26,7 +26,8 @@ import { useState } from 'react';
 
 import { useDashboard, usePaths, useSyncCF } from '@/hooks/useApi';
 import { useAuthStore } from '@/store/authStore';
-import type { DashboardStats, TopicStats, UserProgress } from '@/types';
+import type { DashboardStats, TopicStats, RecentSolve } from '@/types';
+import { getRatingTier, getRatingTierColor } from '@/types';
 
 // ── Helpers ─────────────────────────────────────────────────────
 
@@ -231,9 +232,12 @@ export default function DashboardPage() {
             icon: TrendingUp,
             label: 'Est. Rating',
             value: stats.estimated_rating ? stats.estimated_rating.toLocaleString() : '—',
-            change: `${stats.active_paths} active path${stats.active_paths !== 1 ? 's' : ''}`,
+            change: stats.estimated_rating
+              ? getRatingTier(stats.estimated_rating)
+              : `${stats.active_paths} active path${stats.active_paths !== 1 ? 's' : ''}`,
             color: 'text-neon-cyan',
             bg: 'bg-neon-cyan/10',
+            tierColor: stats.estimated_rating ? getRatingTierColor(stats.estimated_rating) : undefined,
           },
           {
             icon: Target,
@@ -252,7 +256,7 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="text-2xl font-bold">{s.value}</div>
-            <div className={`text-xs mt-1 ${s.color}`}>{s.change}</div>
+            <div className={`text-xs mt-1 ${s.color}`} style={(s as any).tierColor ? { color: (s as any).tierColor } : undefined}>{s.change}</div>
           </div>
         ))}
       </div>
@@ -311,9 +315,21 @@ export default function DashboardPage() {
                         />
                         <div className="min-w-0">
                           <div className="text-sm font-medium truncate">
-                            Problem #{solve.problem_id}
+                            {(solve as RecentSolve).problem_name
+                              ? (solve as RecentSolve).problem_name
+                              : `Problem #${solve.problem_id}`}
                           </div>
                           <div className="flex items-center gap-2 mt-0.5">
+                            {(solve as RecentSolve).contest_id && (
+                              <a
+                                href={`https://codeforces.com/contest/${(solve as RecentSolve).contest_id}/problem/${(solve as RecentSolve).problem_index}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-primary/70 hover:text-primary"
+                              >
+                                {(solve as RecentSolve).contest_id}{(solve as RecentSolve).problem_index}
+                              </a>
+                            )}
                             <span className="text-xs text-muted-foreground">
                               {solve.attempts} attempt{solve.attempts !== 1 ? 's' : ''}
                               {solve.hints_used > 0 &&

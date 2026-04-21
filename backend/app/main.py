@@ -15,17 +15,23 @@ from contextlib import asynccontextmanager
 
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from app.api.v1.router import router as v1_router
+from app.api.deps import require_admin
 from app.config import get_settings
 from app.database import close_db, init_db
 from app.tasks.scheduler import scheduler
 
 settings = get_settings()
+
+limiter = Limiter(key_func=get_remote_address)
 
 logging.basicConfig(
     level=logging.DEBUG if settings.DEBUG else logging.INFO,
@@ -68,6 +74,9 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.ALLOWED_ORIGINS,
@@ -96,13 +105,15 @@ def create_app() -> FastAPI:
         }
 
     @app.post("/admin/sync-problems", tags=["Admin"])
-    async def trigger_sync():
-        """Manually trigger a Codeforces problem sync (admin only)."""
+    async def trigger_sync(
+        admin: "User" = Depends(require_admin),
+    ):
+        """Manually trigger a Codeforces problem sync (admin/superuser only)."""
         import asyncio
         from app.tasks.cf_sync import sync_codeforces_problems
 
         asyncio.create_task(sync_codeforces_problems())
-        return {"message": "Problem sync started in background"}
+        return {"message": "Problem sync started in background", "triggered_by": admin.email}
 
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception):

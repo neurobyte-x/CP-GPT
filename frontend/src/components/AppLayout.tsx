@@ -38,6 +38,18 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
 
+  // Ctrl+K / Cmd+K shortcut to open AI Coach
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        navigate('/app/coach');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigate]);
+
   // Close mobile sidebar on route change
   useEffect(() => {
     setMobileOpen(false);
@@ -86,7 +98,7 @@ export default function AppLayout() {
             )}
             {item.highlight && !collapsed && (
               <span className="ml-auto px-1.5 py-0.5 text-[10px] bg-primary/20 text-primary rounded font-semibold">
-                AI
+                ⌘K
               </span>
             )}
           </NavLink>

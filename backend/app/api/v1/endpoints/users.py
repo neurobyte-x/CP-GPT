@@ -9,7 +9,7 @@ from app.api.deps import get_current_user
 from app.database import get_db
 from app.models.user import User
 from app.schemas.user import UserRead, UserUpdate
-from app.schemas.progress import DashboardStats
+from app.schemas.progress import DashboardStats, RecentSolveResponse
 from app.services.user_analyzer import user_analyzer
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -65,6 +65,29 @@ async def get_dashboard(
 ):
     """Get dashboard statistics for the current user."""
     data = await user_analyzer.get_dashboard_data(db, current_user)
+
+    enriched_solves = []
+    for item in data.get("recent_solves", []):
+        if hasattr(item, '__len__') and len(item) == 2:
+            progress, problem = item
+            enriched_solves.append(RecentSolveResponse(
+                id=progress.id,
+                problem_id=progress.problem_id,
+                problem_name=problem.name if problem else "",
+                contest_id=problem.contest_id if problem else None,
+                problem_index=problem.problem_index if problem else None,
+                status=progress.status.value if hasattr(progress.status, 'value') else progress.status,
+                attempts=progress.attempts,
+                time_spent_seconds=progress.time_spent_seconds,
+                hints_used=progress.hints_used,
+                cf_verdict=progress.cf_verdict,
+                first_attempted_at=progress.first_attempted_at,
+                solved_at=progress.solved_at,
+            ))
+        else:
+            enriched_solves.append(item)
+
+    data["recent_solves"] = enriched_solves
     return DashboardStats(**data)
 
 

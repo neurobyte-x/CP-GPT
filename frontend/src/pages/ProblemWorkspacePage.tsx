@@ -17,6 +17,7 @@ import {
   Users,
   Loader2,
   Sparkles,
+  AlertCircle,
 } from 'lucide-react';
 
 import { useProblem, useCoaching } from '@/hooks/useApi';
@@ -291,6 +292,17 @@ export default function ProblemWorkspacePage() {
               <ExternalLink className="w-3.5 h-3.5" />
               Codeforces
             </a>
+
+            <button
+              onClick={() => {
+                setShowCoach(true);
+                sendCoachMessage('hint', `I'm stuck on this problem. I've been working on it for ${formatTime(timerSeconds)}. Can you give me a hint?`);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg transition-all bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 hover:text-red-300"
+            >
+              <AlertCircle className="w-3.5 h-3.5" />
+              I'm Stuck
+            </button>
 
             <button
               onClick={() => setShowCoach(!showCoach)}

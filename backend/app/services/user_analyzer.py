@@ -11,7 +11,7 @@ Analyzes a user's Codeforces profile and submission history to:
 import logging
 import math
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Optional
 
 from sqlalchemy import and_, func as sqlfunc, select, update
@@ -336,7 +336,8 @@ class UserAnalyzerService:
         }
 
         recent_result = await db.execute(
-            select(UserProgress)
+            select(UserProgress, Problem)
+            .join(Problem, UserProgress.problem_id == Problem.id)
             .where(
                 and_(
                     UserProgress.user_id == user.id,
@@ -346,7 +347,7 @@ class UserAnalyzerService:
             .order_by(UserProgress.solved_at.desc())
             .limit(10)
         )
-        recent_solves = recent_result.scalars().all()
+        recent_solves = recent_result.all()
 
         return {
             "total_problems_solved": total_solved,
@@ -354,7 +355,7 @@ class UserAnalyzerService:
             "total_time_spent_hours": round(total_time_seconds / 3600, 1),
             "active_paths": active_paths_count.scalar_one(),
             "completed_paths": completed_paths_count.scalar_one(),
-            "current_streak_days": 0,
+            "current_streak_days": await self._calculate_streak(db, user.id),
             "estimated_rating": user.estimated_rating,
             "topic_stats": topic_stats,
             "recent_solves": recent_solves,
@@ -385,5 +386,39 @@ class UserAnalyzerService:
             for s in weak
         ]
 
+    async def _calculate_streak(self, db: AsyncSession, user_id) -> int:
+        """
+        Calculate current daily solve streak.
+        Counts consecutive days (going backwards from today) that have at least one solve.
+        """
+        result = await db.execute(
+            select(sqlfunc.date(UserProgress.solved_at).label("solve_date"))
+            .where(
+                and_(
+                    UserProgress.user_id == user_id,
+                    UserProgress.status == AttemptStatus.SOLVED,
+                    UserProgress.solved_at.isnot(None),
+                )
+            )
+            .group_by("solve_date")
+            .order_by(sqlfunc.date(UserProgress.solved_at).desc())
+        )
+        dates = [row.solve_date for row in result.all()]
+        if not dates:
+            return 0
+
+        today = date.today()
+        streak = 0
+        expected = today
+
+        for d in dates:
+            solve_date = d if isinstance(d, date) else d.date() if hasattr(d, 'date') else date.fromisoformat(str(d))
+            if solve_date == expected:
+                streak += 1
+                expected -= timedelta(days=1)
+            elif solve_date < expected:
+                break
+
+        return streak
 
 user_analyzer = UserAnalyzerService()

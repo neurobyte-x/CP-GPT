@@ -21,6 +21,25 @@ class UserProgressResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class RecentSolveResponse(BaseModel):
+    """Enriched solve entry with problem name for display."""
+
+    id: int
+    problem_id: int
+    problem_name: str = ""
+    contest_id: Optional[int] = None
+    problem_index: Optional[str] = None
+    status: str
+    attempts: int
+    time_spent_seconds: int
+    hints_used: int
+    cf_verdict: Optional[str] = None
+    first_attempted_at: datetime
+    solved_at: Optional[datetime] = None
+
+    model_config = {"from_attributes": True}
+
+
 class TopicStatsResponse(BaseModel):
     tag_name: str
     tag_slug: str
@@ -44,7 +63,7 @@ class DashboardStats(BaseModel):
     current_streak_days: int = 0
     estimated_rating: Optional[int] = None
     topic_stats: list[TopicStatsResponse] = []
-    recent_solves: list[UserProgressResponse] = []
+    recent_solves: list[RecentSolveResponse] = []
     rating_distribution: dict[str, int] = {}
 
 
@@ -58,3 +77,4 @@ class SyncStatusResponse(BaseModel):
     completed_at: Optional[datetime] = None
 
     model_config = {"from_attributes": True}
+

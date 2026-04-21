@@ -13,7 +13,9 @@ Endpoints:
 import uuid
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy import and_, func as sqlfunc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -33,6 +35,7 @@ from app.services.agent import agent_service
 
 logger = logging.getLogger(__name__)
 
+limiter = Limiter(key_func=get_remote_address)
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
 
@@ -207,7 +210,9 @@ async def update_conversation(
     "/conversations/{conversation_id}/messages",
     response_model=ChatResponse,
 )
+@limiter.limit("10/minute")
 async def send_message(
+    request: Request,
     conversation_id: uuid.UUID,
     body: ChatRequest,
     db: AsyncSession = Depends(get_db),
