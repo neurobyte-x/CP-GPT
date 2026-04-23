@@ -9,7 +9,11 @@ from app.api.deps import get_current_user
 from app.database import get_db
 from app.models.user import User
 from app.schemas.user import UserRead, UserUpdate
-from app.schemas.progress import DashboardStats, RecentSolveResponse
+from app.schemas.progress import (
+    DashboardStats,
+    RecentSolveResponse,
+    TopicStatsResponse,
+)
 from app.services.user_analyzer import user_analyzer
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -66,6 +70,29 @@ async def get_dashboard(
     """Get dashboard statistics for the current user."""
     data = await user_analyzer.get_dashboard_data(db, current_user)
 
+    enriched_topics = []
+    for item in data.get("topic_stats", []):
+        if isinstance(item, TopicStatsResponse):
+            enriched_topics.append(item)
+            continue
+
+        # Convert ORM topic stats rows into the response shape expected by DashboardStats.
+        tag = getattr(item, "tag", None)
+        tag_name = getattr(tag, "name", None) or "Unknown"
+        tag_slug = getattr(tag, "slug", None) or str(getattr(item, "tag_id", "unknown"))
+
+        enriched_topics.append(
+            TopicStatsResponse(
+                tag_name=tag_name,
+                tag_slug=tag_slug,
+                problems_solved=getattr(item, "problems_solved", 0),
+                problems_attempted=getattr(item, "problems_attempted", 0),
+                avg_rating_solved=float(getattr(item, "avg_rating_solved", 0.0) or 0.0),
+                max_rating_solved=getattr(item, "max_rating_solved", 0),
+                estimated_skill=getattr(item, "estimated_skill", 800),
+            )
+        )
+
     enriched_solves = []
     for item in data.get("recent_solves", []):
         if hasattr(item, '__len__') and len(item) == 2:
@@ -87,6 +114,7 @@ async def get_dashboard(
         else:
             enriched_solves.append(item)
 
+    data["topic_stats"] = enriched_topics
     data["recent_solves"] = enriched_solves
     return DashboardStats(**data)
 
