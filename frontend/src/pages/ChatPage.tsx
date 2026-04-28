@@ -1,11 +1,3 @@
-/**
- * ChatPage — AI Coach chat interface (dark theme).
- *
- * Layout:
- *  - Left sidebar: conversation list + new conversation button
- *  - Center: message area with auto-scroll + input bar + quick action buttons
- */
-
 import { useState, useRef, useEffect } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import {
@@ -52,10 +44,8 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  // Check if we got an initial message from Dashboard quick coach
   const initialMessage = (location.state as { initialMessage?: string } | null)?.initialMessage;
 
-  // Queries & mutations
   const { data: conversations = [], isLoading: convLoading } = useConversations();
   const { data: activeConv, isLoading: msgLoading } = useConversation(activeId);
   const createConv = useCreateConversation();
@@ -65,24 +55,19 @@ export default function ChatPage() {
   const messages = activeConv?.messages || [];
   const isProcessing = sendMsg.isPending;
 
-  // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isProcessing]);
 
-  // Focus input on conversation change
   useEffect(() => {
     inputRef.current?.focus();
   }, [activeId]);
 
-  // Handle initial message from navigation state
   useEffect(() => {
     if (initialMessage && !activeId) {
       handleSend(initialMessage);
-      // Clear the state to avoid re-sending
       window.history.replaceState({}, document.title);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialMessage]);
 
   const selectConversation = (id: string) => {
@@ -94,7 +79,6 @@ export default function ChatPage() {
       const conv = await createConv.mutateAsync(undefined);
       selectConversation(conv.id);
     } catch {
-      // handled by react-query
     }
   };
 
@@ -106,7 +90,6 @@ export default function ChatPage() {
         setSearchParams({});
       }
     } catch {
-      // handled by react-query
     }
   };
 
@@ -116,7 +99,6 @@ export default function ChatPage() {
 
     let convId = activeId;
 
-    // Auto-create conversation if none active
     if (!convId) {
       try {
         const conv = await createConv.mutateAsync(undefined);
@@ -132,7 +114,6 @@ export default function ChatPage() {
     try {
       await sendMsg.mutateAsync({ conversationId: convId, message: msg });
     } catch {
-      // error shown via react-query
     }
   };
 
@@ -145,7 +126,6 @@ export default function ChatPage() {
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
-      {/* ── Conversation Sidebar ──────────────────────────────── */}
       <div className="w-64 border-r border-border/50 bg-card/50 flex flex-col flex-shrink-0">
         <div className="p-3 border-b border-border/50">
           <button
@@ -209,9 +189,7 @@ export default function ChatPage() {
         </div>
       </div>
 
-      {/* ── Main Chat Area ────────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Chat Header */}
         <div className="px-4 lg:px-6 py-3 border-b border-border/50 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center">
@@ -235,10 +213,8 @@ export default function ChatPage() {
           )}
         </div>
 
-        {/* Messages */}
         <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4 space-y-4">
           {!activeId ? (
-            /* Empty state — show welcome + starter prompts */
             <div className="flex flex-col items-center justify-center h-full max-w-xl mx-auto text-center">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
                 <Brain className="w-8 h-8 text-primary" />
@@ -269,7 +245,6 @@ export default function ChatPage() {
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
           ) : messages.length === 0 ? (
-            /* Conversation exists but no messages yet */
             <div className="flex flex-col items-center justify-center h-full text-center">
               <Brain className="w-10 h-10 text-muted-foreground/40 mb-3" />
               <p className="text-muted-foreground text-sm">
@@ -284,7 +259,6 @@ export default function ChatPage() {
             </>
           )}
 
-          {/* Processing indicator */}
           {isProcessing && (
             <div className="flex justify-start mb-4">
               <div className="bg-secondary/60 border border-border/50 rounded-2xl rounded-bl-md px-4 py-3">
@@ -303,7 +277,6 @@ export default function ChatPage() {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Quick actions */}
         {activeId && (
           <div className="px-4 lg:px-6 py-2 flex gap-2 overflow-x-auto shrink-0">
             {QUICK_ACTIONS.map((q) => (
@@ -318,7 +291,6 @@ export default function ChatPage() {
           </div>
         )}
 
-        {/* Input bar */}
         <div className="px-4 lg:px-6 py-3 border-t border-border/50 shrink-0">
           <div className="max-w-3xl mx-auto flex items-end gap-2">
             <div className="flex-1 relative">

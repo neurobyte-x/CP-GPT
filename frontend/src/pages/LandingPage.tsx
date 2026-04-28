@@ -35,11 +35,9 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence, useInView } from "motion/react";
 
-// ─── Animated Background ─────────────────────────────────────
 function HeroBackground() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {/* Grid */}
       <div
         className="absolute inset-0 opacity-[0.35]"
         style={{
@@ -52,11 +50,9 @@ function HeroBackground() {
           WebkitMaskImage: "radial-gradient(ellipse 80% 70% at 50% 30%, black 30%, transparent 100%)",
         }}
       />
-      {/* Glows */}
       <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[1000px] h-[1000px] bg-[radial-gradient(ellipse,rgba(255,255,255,0.03)_0%,transparent_60%)]" />
       <div className="absolute top-[10%] left-[-10%] w-[700px] h-[700px] bg-[radial-gradient(ellipse,rgba(255,255,255,0.02)_0%,transparent_60%)]" />
       <div className="absolute top-[20%] right-[-5%] w-[500px] h-[500px] bg-[radial-gradient(ellipse,rgba(255,255,255,0.015)_0%,transparent_60%)]" />
-      {/* Floating particles */}
       {[...Array(18)].map((_, i) => (
         <motion.div
           key={i}
@@ -86,7 +82,6 @@ function HeroBackground() {
   );
 }
 
-// ─── Animated Counter ────────────────────────────────────────
 function AnimatedCounter({ target, suffix = "" }: { target: string; suffix?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true });
@@ -122,7 +117,6 @@ function AnimatedCounter({ target, suffix = "" }: { target: string; suffix?: str
   );
 }
 
-// ─── Typewriter Terminal ─────────────────────────────────────
 const terminalLines = [
   { type: "prompt", text: "$ cpcoach solve --topic graphs --rating 1700" },
   { type: "system", text: "🔍 Analyzing your skill profile..." },
@@ -145,7 +139,6 @@ function AnimatedTerminal() {
 
   useEffect(() => {
     if (visibleLines >= terminalLines.length) {
-      // Reset after a pause
       const timeout = setTimeout(() => {
         setVisibleLines(0);
         setCharIndex(0);
@@ -216,7 +209,6 @@ function AnimatedTerminal() {
   );
 }
 
-// ─── Interactive Chat Demo ───────────────────────────────────
 const demoQuestions = [
   { q: "How do I detect cycles in a directed graph?", a: "Use DFS with 3-color marking (white/gray/black). A cycle exists when you visit a gray node. Gray means the node is currently being processed in the DFS stack — encountering it again means you've found a back edge." },
   { q: "When should I use Dijkstra vs BFS?", a: "Use BFS for unweighted graphs (all edges weight 1). Use Dijkstra when edges have different non-negative weights. For negative weights, use Bellman-Ford. Dijkstra is O((V+E)logV) with a priority queue." },
@@ -242,7 +234,6 @@ function InteractiveChatDemo() {
 
   return (
     <div className="bg-card border border-border rounded-2xl overflow-hidden">
-      {/* Header */}
       <div className="px-5 py-3.5 border-b border-border/50 flex items-center gap-3 bg-secondary/30">
         <div className="w-8 h-8 rounded-lg bg-primary/15 flex items-center justify-center">
           <Brain className="w-5 h-5 text-primary" />
@@ -258,7 +249,6 @@ function InteractiveChatDemo() {
         </div>
       </div>
 
-      {/* Chat area */}
       <div className="p-5 min-h-[220px] space-y-4">
         {selectedQ !== null && (
           <motion.div
@@ -308,7 +298,6 @@ function InteractiveChatDemo() {
         )}
       </div>
 
-      {/* Quick questions */}
       <div className="px-5 pb-5 space-y-2">
         <p className="text-[11px] text-muted-foreground" style={{ fontWeight: 500 }}>TRY ASKING:</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -332,7 +321,6 @@ function InteractiveChatDemo() {
   );
 }
 
-// ─── Animated Rating Graph ───────────────────────────────────
 function RatingGraph() {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true });
@@ -400,7 +388,6 @@ function RatingGraph() {
 
   const lastPoint = visiblePoints[visiblePoints.length - 1];
 
-  // Rating bands
   const bands = [
     { min: 1100, max: 1200, color: "rgba(107,114,128,0.06)", label: "Newbie" },
     { min: 1200, max: 1400, color: "rgba(34,197,94,0.04)", label: "Pupil" },
@@ -439,7 +426,6 @@ function RatingGraph() {
           </filter>
         </defs>
 
-        {/* Rating bands */}
         {bands.map((b) => (
           <g key={b.label}>
             <rect
@@ -463,7 +449,6 @@ function RatingGraph() {
           </g>
         ))}
 
-        {/* Horizontal guides */}
         {[1200, 1400, 1600, 1900].map((r) => (
           <line
             key={r}
@@ -476,12 +461,10 @@ function RatingGraph() {
           />
         ))}
 
-        {/* Area fill */}
         {visiblePoints.length > 1 && (
           <path d={areaPath} fill="url(#ratingGrad)" />
         )}
 
-        {/* Line */}
         {visiblePoints.length > 1 && (
           <path
             d={linePath}
@@ -494,7 +477,6 @@ function RatingGraph() {
           />
         )}
 
-        {/* Current point glow */}
         {lastPoint && (
           <>
             <circle cx={toX(lastPoint.month)} cy={toY(lastPoint.rating)} r="8" fill="#ffffff" opacity="0.15" />
@@ -503,7 +485,6 @@ function RatingGraph() {
           </>
         )}
 
-        {/* Milestones */}
         {milestones.map((m) => {
           if (m.month > (lastPoint?.month || 0)) return null;
           return (
@@ -534,7 +515,6 @@ function RatingGraph() {
         })}
       </svg>
 
-      {/* Rating badges */}
       <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
         {[
           { label: "Starting", value: "1,200", color: "text-gray-400" },
@@ -554,7 +534,6 @@ function RatingGraph() {
   );
 }
 
-// ─── How It Works ────────────────────────────────────────────
 const howItWorks = [
   {
     step: "01",
@@ -646,7 +625,6 @@ const howItWorks = [
   },
 ];
 
-// ─── Comparison Table ────────────────────────────────────────
 const comparisonRows = [
   { feature: "Personalized problem selection", us: true, them: false },
   { feature: "AI coaching conversations", us: true, them: false },
@@ -658,7 +636,6 @@ const comparisonRows = [
   { feature: "Spaced repetition", us: true, them: false },
 ];
 
-// ─── Features Data ───────────────────────────────────────────
 const features = [
   { icon: Brain, title: "AI-Powered Coaching", description: "Context-aware coaching that adapts to your skill level with progressive hints and concept explanations.", color: "text-neon-purple", bg: "bg-neon-purple/10", border: "border-neon-purple/20" },
   { icon: Target, title: "Structured Practice Paths", description: "Curated learning paths from beginner to expert targeting specific algorithms with progressive difficulty.", color: "text-neon-blue", bg: "bg-neon-blue/10", border: "border-neon-blue/20" },
@@ -682,14 +659,12 @@ const testimonials = [
   { name: "Yuki Tanaka", handle: "@yuki_algo", rating: "Expert (1780)", ratingColor: "text-blue-400", text: "The progressive hint system is genius. Instead of spoiling solutions, it nudges me just enough to figure things out myself. My contest performance skyrocketed.", avatar: "YT" },
 ];
 
-// ─── Main Component ─────────────────────────────────────────
 export default function LandingPage() {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
-      {/* ── Navbar ──────────────────────────────────────────── */}
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -740,12 +715,10 @@ export default function LandingPage() {
         </AnimatePresence>
       </nav>
 
-      {/* ── Hero ───────────────────────────────────────────── */}
       <section className="relative pt-28 pb-8 lg:pt-40 lg:pb-12">
         <HeroBackground />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-            {/* Left: Text */}
             <div>
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary text-sm mb-6">
@@ -801,7 +774,6 @@ export default function LandingPage() {
               </motion.div>
             </div>
 
-            {/* Right: Terminal */}
             <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, delay: 0.2 }}>
               <div className="relative">
                 <div className="absolute -inset-3 bg-gradient-to-r from-white/[0.06] via-white/[0.03] to-white/[0.06] rounded-3xl blur-xl" />
@@ -814,7 +786,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Logos / Trust ──────────────────────────────────── */}
       <section className="py-12 border-y border-border/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-center text-xs text-muted-foreground mb-6 uppercase tracking-widest">
@@ -840,7 +811,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Stats (Animated Counters) ─────────────────────── */}
       <section id="results" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
@@ -865,7 +835,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── How It Works ──────────────────────────────────── */}
       <section className="py-24 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/[0.01] to-transparent" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -911,7 +880,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Interactive Demo ──────────────────────────────── */}
       <section id="demo" className="py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-start">
@@ -931,10 +899,8 @@ export default function LandingPage() {
             </div>
 
             <div className="space-y-6">
-              {/* Rating Graph */}
               <RatingGraph />
 
-              {/* Mini dashboard preview */}
               <div className="bg-card border border-border rounded-2xl p-5">
                 <div className="text-sm mb-4" style={{ fontWeight: 600 }}>Dashboard Preview</div>
                 <div className="grid grid-cols-3 gap-3">
@@ -963,7 +929,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Features ──────────────────────────────────────── */}
       <section id="features" className="py-24 bg-secondary/20 border-y border-border/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -1003,7 +968,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Comparison Table ──────────────────────────────── */}
       <section className="py-24">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
@@ -1048,7 +1012,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Testimonials ──────────────────────────────────── */}
       <section id="testimonials" className="py-24 bg-secondary/20 border-y border-border/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -1098,7 +1061,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Final CTA ─────────────────────────────────────── */}
       <section className="py-28 relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] via-transparent to-transparent" />
@@ -1140,7 +1102,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Footer ────────────────────────────────────────── */}
       <footer className="border-t border-border/50 py-12 bg-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">

@@ -1,9 +1,3 @@
-/**
- * ChatMessage — renders a single message in the chat interface (dark theme).
- * User messages: right-aligned, primary tinted background.
- * Assistant messages: left-aligned with markdown rendering + problem cards.
- */
-
 import ReactMarkdown from 'react-markdown';
 import { Sparkles } from 'lucide-react';
 import ProblemCard from './ProblemCard';
@@ -35,7 +29,6 @@ export default function ChatMessage({ message }: ChatMessageProps) {
   return (
     <div className="flex justify-start mb-4">
       <div className="max-w-[85%] lg:max-w-[75%] space-y-3">
-        {/* Text content with markdown */}
         {message.content && (
           <div className="bg-secondary/60 border border-border/50 rounded-2xl rounded-bl-md px-4 py-3">
             <div className="flex items-center gap-2 mb-2">
@@ -51,7 +44,6 @@ export default function ChatMessage({ message }: ChatMessageProps) {
           </div>
         )}
 
-        {/* Problem cards */}
         {problems.length > 0 && (
           <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
             {problems.map((p) => (

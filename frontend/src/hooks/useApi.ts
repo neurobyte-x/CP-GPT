@@ -1,18 +1,12 @@
-/**
- * Custom hooks for data fetching with React Query.
- */
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/services/api';
 import type { CreatePathRequest, ProblemFilters, CoachingRequest } from '@/types';
-
-// ── Problems ────────────────────────────────────────────────────
 
 export function useProblems(filters: ProblemFilters) {
   return useQuery({
     queryKey: ['problems', filters],
     queryFn: () => api.getProblems(filters),
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -28,11 +22,9 @@ export function useTags() {
   return useQuery({
     queryKey: ['tags'],
     queryFn: () => api.getTags(),
-    staleTime: 30 * 60 * 1000, // 30 minutes
+    staleTime: 30 * 60 * 1000,
   });
 }
-
-// ── Paths ───────────────────────────────────────────────────────
 
 export function usePaths(status?: string) {
   return useQuery({
@@ -85,8 +77,6 @@ export function useSkipProblem() {
   });
 }
 
-// ── Dashboard & Progress ────────────────────────────────────────
-
 export function useDashboard() {
   return useQuery({
     queryKey: ['dashboard'],
@@ -102,15 +92,11 @@ export function useTopicStats() {
   });
 }
 
-// ── Coaching ────────────────────────────────────────────────────
-
 export function useCoaching() {
   return useMutation({
     mutationFn: (data: CoachingRequest) => api.getCoaching(data),
   });
 }
-
-// ── User Actions ────────────────────────────────────────────────
 
 export function useSyncCF() {
   const qc = useQueryClient();
@@ -123,13 +109,11 @@ export function useSyncCF() {
   });
 }
 
-// ── Chat ────────────────────────────────────────────────────────
-
 export function useConversations() {
   return useQuery({
     queryKey: ['conversations'],
     queryFn: () => api.listConversations(),
-    staleTime: 30 * 1000, // 30 seconds
+    staleTime: 30 * 1000,
   });
 }
 

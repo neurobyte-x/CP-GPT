@@ -1,8 +1,3 @@
-/**
- * App shell — collapsible dark sidebar + topbar + content area.
- * Based on UI reference design, wired to real auth store.
- */
-
 import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
@@ -38,7 +33,6 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
 
-  // Ctrl+K / Cmd+K shortcut to open AI Coach
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
@@ -50,7 +44,6 @@ export default function AppLayout() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [navigate]);
 
-  // Close mobile sidebar on route change
   useEffect(() => {
     setMobileOpen(false);
   }, []);
@@ -62,7 +55,6 @@ export default function AppLayout() {
 
   const SidebarContent = () => (
     <>
-      {/* Logo */}
       <div className="flex items-center gap-2.5 px-4 py-5 border-b border-border/50">
         <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
           <Zap className="w-5 h-5 text-primary-foreground" />
@@ -74,7 +66,6 @@ export default function AppLayout() {
         )}
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => (
           <NavLink
@@ -105,7 +96,6 @@ export default function AppLayout() {
         ))}
       </nav>
 
-      {/* Bottom */}
       <div className="px-3 py-4 border-t border-border/50 space-y-1">
         <NavLink
           to="/app/profile"
@@ -145,7 +135,6 @@ export default function AppLayout() {
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      {/* Desktop Sidebar */}
       <aside
         className={`hidden lg:flex flex-col border-r border-border/50 bg-sidebar transition-all duration-300 shrink-0 ${
           collapsed ? 'w-[68px]' : 'w-[240px]'
@@ -154,7 +143,6 @@ export default function AppLayout() {
         <SidebarContent />
       </aside>
 
-      {/* Mobile Sidebar Overlay */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
@@ -167,9 +155,7 @@ export default function AppLayout() {
         </div>
       )}
 
-      {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Topbar */}
         <header className="h-14 border-b border-border/50 flex items-center justify-between px-4 lg:px-6 bg-background/80 backdrop-blur-sm shrink-0">
           <div className="flex items-center gap-3">
             <button
@@ -195,7 +181,6 @@ export default function AppLayout() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
-            {/* Streak indicator (placeholder — will wire to real data later) */}
             <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-neon-orange/10 border border-neon-orange/20">
               <Flame className="w-4 h-4 text-neon-orange" />
               <span className="text-sm font-semibold text-neon-orange">
@@ -226,7 +211,6 @@ export default function AppLayout() {
           </div>
         </header>
 
-        {/* Content */}
         <main className="flex-1 overflow-auto">
           <Outlet />
         </main>

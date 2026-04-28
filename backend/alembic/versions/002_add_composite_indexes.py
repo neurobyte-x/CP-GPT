@@ -17,7 +17,6 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # Optimize recommender's problem search by rating + tags
     op.create_index(
         'ix_problems_rating_solved',
         'problems',
@@ -25,7 +24,6 @@ def upgrade() -> None:
         if_not_exists=True,
     )
 
-    # Optimize exclude-solved-by queries
     op.create_index(
         'ix_user_progress_user_status',
         'user_progress',
@@ -33,7 +31,6 @@ def upgrade() -> None:
         if_not_exists=True,
     )
 
-    # Optimize solved-at queries for streak calculation
     op.create_index(
         'ix_user_progress_user_solved_at',
         'user_progress',
@@ -41,7 +38,6 @@ def upgrade() -> None:
         if_not_exists=True,
     )
 
-    # Optimize conversation history retrieval
     op.create_index(
         'ix_messages_conversation_created',
         'messages',
@@ -49,7 +45,6 @@ def upgrade() -> None:
         if_not_exists=True,
     )
 
-    # Optimize problem-tag junction lookups
     op.create_index(
         'ix_problem_tags_tag_problem',
         'problem_tags',

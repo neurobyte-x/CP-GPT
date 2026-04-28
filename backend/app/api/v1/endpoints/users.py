@@ -76,7 +76,6 @@ async def get_dashboard(
             enriched_topics.append(item)
             continue
 
-        # Convert ORM topic stats rows into the response shape expected by DashboardStats.
         tag = getattr(item, "tag", None)
         tag_name = getattr(tag, "name", None) or "Unknown"
         tag_slug = getattr(tag, "slug", None) or str(getattr(item, "tag_id", "unknown"))

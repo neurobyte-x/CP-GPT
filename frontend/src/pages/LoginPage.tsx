@@ -1,7 +1,3 @@
-/**
- * Login page — dark theme, matching the Cp-GPT.ai design system.
- */
-
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
@@ -28,11 +24,9 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      {/* Subtle background glow */}
       <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-[radial-gradient(ellipse,rgba(255,255,255,0.02)_0%,transparent_60%)] pointer-events-none" />
 
       <div className="relative w-full max-w-md">
-        {/* Logo */}
         <div className="mb-8 text-center">
           <Link to="/" className="inline-flex items-center gap-2.5 mb-4">
             <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.15)]">
@@ -45,7 +39,6 @@ export default function LoginPage() {
           <p className="text-muted-foreground text-sm">Sign in to continue your practice</p>
         </div>
 
-        {/* Card */}
         <div className="rounded-2xl border border-border bg-card p-8">
           <h2 className="mb-6 text-xl font-semibold text-foreground">Sign In</h2>
 

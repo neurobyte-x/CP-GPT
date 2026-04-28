@@ -1,12 +1,3 @@
-/**
- * API client — centralized HTTP layer with auth token management.
- *
- * Adapted for FastAPI-Users:
- *  - Login uses OAuth2 form data (not JSON)
- *  - No refresh tokens — just access_token
- *  - Register uses JSON body
- */
-
 import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
 import type {
   ChatResponse,
@@ -29,7 +20,6 @@ import type {
   UserProgress,
 } from '@/types';
 
-// Build BASE_URL: use environment variable if available, otherwise use relative path
 const getBaseUrl = () => {
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
   if (apiBaseUrl && apiBaseUrl.startsWith('http')) {
@@ -49,7 +39,6 @@ class ApiClient {
       headers: { 'Content-Type': 'application/json' },
     });
 
-    // Attach auth token to every request
     this.client.interceptors.request.use((config: InternalAxiosRequestConfig) => {
       const token = localStorage.getItem('access_token');
       if (token && config.headers) {
@@ -58,13 +47,11 @@ class ApiClient {
       return config;
     });
 
-    // Handle 401 — logout (no refresh token with FastAPI-Users)
     this.client.interceptors.response.use(
       (res) => res,
       async (error) => {
         if (error.response?.status === 401 && !error.config?._retry) {
           error.config._retry = true;
-          // No refresh flow — just clear and redirect
           this.logout();
         }
         return Promise.reject(error);
@@ -72,16 +59,12 @@ class ApiClient {
     );
   }
 
-  // ── Auth ────────────────────────────────────────────────────
-
   async register(data: RegisterRequest): Promise<User> {
     const resp = await this.client.post('/auth/register', data);
     return resp.data;
   }
 
   async login(data: LoginRequest): Promise<TokenResponse> {
-    // FastAPI-Users uses OAuth2 form data for login
-    // The "username" field is the email address
     const formData = new URLSearchParams();
     formData.append('username', data.email);
     formData.append('password', data.password);
@@ -98,8 +81,6 @@ class ApiClient {
     localStorage.removeItem('access_token');
     window.location.href = '/';
   }
-
-  // ── Users ───────────────────────────────────────────────────
 
   async getMe(): Promise<User> {
     const resp = await this.client.get('/users/me');
@@ -126,8 +107,6 @@ class ApiClient {
     return resp.data;
   }
 
-  // ── Problems ────────────────────────────────────────────────
-
   async getProblems(filters: ProblemFilters = {}): Promise<ProblemListResponse> {
     const resp = await this.client.get('/problems', { params: filters });
     return resp.data;
@@ -142,8 +121,6 @@ class ApiClient {
     const resp = await this.client.get(`/problems/${id}`);
     return resp.data;
   }
-
-  // ── Paths ───────────────────────────────────────────────────
 
   async createPath(data: CreatePathRequest): Promise<PracticePath> {
     const resp = await this.client.post('/paths', data);
@@ -184,8 +161,6 @@ class ApiClient {
     return resp.data;
   }
 
-  // ── Progress ────────────────────────────────────────────────
-
   async listProgress(status?: string, page = 1): Promise<UserProgress[]> {
     const resp = await this.client.get('/progress', { params: { status_filter: status, page } });
     return resp.data;
@@ -201,14 +176,10 @@ class ApiClient {
     return resp.data;
   }
 
-  // ── Coaching ────────────────────────────────────────────────
-
   async getCoaching(data: CoachingRequest): Promise<CoachingResponse> {
     const resp = await this.client.post('/coaching', data);
     return resp.data;
   }
-
-  // ── Chat ─────────────────────────────────────────────────────
 
   async listConversations(): Promise<Conversation[]> {
     const resp = await this.client.get('/chat/conversations');

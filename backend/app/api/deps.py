@@ -12,7 +12,7 @@ from app.core.users import (
     current_superuser,
     optional_current_user,
 )
-from app.database import get_db  # noqa: F401
+from app.database import get_db
 from app.models.user import User
 
 get_current_user = current_active_user

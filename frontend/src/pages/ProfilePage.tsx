@@ -1,8 +1,3 @@
-/**
- * User profile page — settings, CF handle linking, account management.
- * Dark theme styled, no Layout.tsx dependencies.
- */
-
 import { useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { useSyncCF } from '@/hooks/useApi';
@@ -70,7 +65,6 @@ export default function ProfilePage() {
         </p>
       </div>
 
-      {/* Account Info */}
       <div className="bg-card border border-border rounded-xl p-5">
         <div className="mb-5 flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
@@ -106,7 +100,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Codeforces Integration */}
       <div className="bg-card border border-border rounded-xl p-5">
         <div className="mb-5 flex items-center gap-2">
           <Link2 className="h-5 w-5 text-neon-cyan" />
@@ -173,7 +166,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Account Security */}
       <div className="bg-card border border-border rounded-xl p-5">
         <div className="mb-3 flex items-center gap-2">
           <Shield className="h-5 w-5 text-neon-purple" />
@@ -184,7 +176,6 @@ export default function ProfilePage() {
         </p>
       </div>
 
-      {/* Save Button */}
       <div className="flex justify-end">
         <button
           onClick={handleSave}

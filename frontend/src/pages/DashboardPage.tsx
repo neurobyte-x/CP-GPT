@@ -1,8 +1,3 @@
-/**
- * Dashboard page — dark theme, wired to real backend data.
- * Visual design from UI reference, data from useDashboard + usePaths hooks.
- */
-
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Brain,
@@ -28,8 +23,6 @@ import { useDashboard, usePaths, useSyncCF } from '@/hooks/useApi';
 import { useAuthStore } from '@/store/authStore';
 import type { DashboardStats, TopicStats, RecentSolve } from '@/types';
 import { getRatingTier, getRatingTierColor } from '@/types';
-
-// ── Helpers ─────────────────────────────────────────────────────
 
 function ratingColor(r: number | null): string {
   if (r === null) return 'text-gray-400';
@@ -70,8 +63,6 @@ const statusIcons: Record<string, typeof CheckCircle2> = {
   gave_up: AlertTriangle,
 };
 
-// ── Loading skeleton ────────────────────────────────────────────
-
 function DashboardSkeleton() {
   return (
     <div className="p-4 lg:p-6 space-y-6 max-w-[1400px] mx-auto animate-pulse">
@@ -97,8 +88,6 @@ function DashboardSkeleton() {
   );
 }
 
-// ── Empty state ─────────────────────────────────────────────────
-
 function DashboardEmpty({ onSync, syncing }: { onSync: () => void; syncing: boolean }) {
   return (
     <div className="p-4 lg:p-6 max-w-[1400px] mx-auto">
@@ -123,8 +112,6 @@ function DashboardEmpty({ onSync, syncing }: { onSync: () => void; syncing: bool
   );
 }
 
-// ── Main Component ──────────────────────────────────────────────
-
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -143,7 +130,6 @@ export default function DashboardPage() {
     return <DashboardEmpty onSync={() => syncCF.mutate()} syncing={syncCF.isPending} />;
   }
 
-  // Derive weak topics — bottom 4 by estimated_skill
   const weakTopics: { name: string; score: number; color: string }[] = [...stats.topic_stats]
     .filter((t) => t.problems_solved > 0)
     .sort((a, b) => a.estimated_skill - b.estimated_skill)
@@ -154,13 +140,10 @@ export default function DashboardPage() {
       color: t.estimated_skill < 45 ? 'bg-red-500' : 'bg-neon-orange',
     }));
 
-  // Active path for sidebar
   const currentPath = activePaths && activePaths.length > 0 ? activePaths[0] : null;
 
-  // Recent solves for activity feed
   const recentSolves = stats.recent_solves.slice(0, 5);
 
-  // Quick coach handler
   const handleCoachSubmit = () => {
     if (coachInput.trim()) {
       navigate('/app/coach', { state: { initialMessage: coachInput.trim() } });
@@ -171,7 +154,6 @@ export default function DashboardPage() {
 
   return (
     <div className="p-4 lg:p-6 space-y-6 max-w-[1400px] mx-auto">
-      {/* Welcome */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold">
@@ -209,7 +191,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Stats Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           {
@@ -261,11 +242,8 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Main Grid */}
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Left Column */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Quick Coach Input */}
           <div className="bg-card border border-border rounded-xl p-4">
             <div className="flex items-center gap-2 mb-3">
               <Brain className="w-4 h-4 text-primary" />
@@ -289,7 +267,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Recent Activity */}
           <div className="bg-card border border-border rounded-xl overflow-hidden">
             <div className="p-4 border-b border-border/50 flex items-center justify-between">
               <span className="text-sm font-semibold">Recent Activity</span>
@@ -365,7 +342,6 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Rating Distribution (simple visual) */}
           {Object.keys(stats.rating_distribution).length > 0 && (
             <div className="bg-card border border-border rounded-xl overflow-hidden">
               <div className="p-4 border-b border-border/50 flex items-center justify-between">
@@ -414,9 +390,7 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Right Column */}
         <div className="space-y-6">
-          {/* Daily Goal / Progress summary */}
           <div className="bg-card border border-border rounded-xl p-4">
             <div className="flex items-center justify-between mb-4">
               <span className="text-sm font-semibold">Overview</span>
@@ -437,7 +411,6 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          {/* Weak Topics */}
           {weakTopics.length > 0 && (
             <div className="bg-card border border-border rounded-xl p-4">
               <div className="flex items-center justify-between mb-4">
@@ -471,7 +444,6 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Current Path Progress */}
           {currentPath && (
             <div className="bg-card border border-border rounded-xl p-4">
               <div className="flex items-center justify-between mb-4">
@@ -508,7 +480,6 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Active Paths list (if multiple) */}
           {activePaths && activePaths.length > 1 && (
             <div className="bg-card border border-border rounded-xl p-4">
               <div className="flex items-center justify-between mb-3">
@@ -545,7 +516,6 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Quick Links */}
           <div className="bg-card border border-border rounded-xl p-4 space-y-2">
             <span className="text-sm font-semibold">Quick Actions</span>
             {[

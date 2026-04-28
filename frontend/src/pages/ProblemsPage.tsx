@@ -47,7 +47,6 @@ function ratingBg(r: number | null) {
 export default function ProblemsPage() {
   const navigate = useNavigate();
 
-  // ── Filter state ────────────────────────────────────────────────
   const [searchInput, setSearchInput] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -59,7 +58,6 @@ export default function ProblemsPage() {
   const [page, setPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
 
-  // ── Debounce search ─────────────────────────────────────────────
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchInput);
@@ -70,7 +68,6 @@ export default function ProblemsPage() {
 
   const resetPage = useCallback(() => setPage(1), []);
 
-  // ── Build filters object ────────────────────────────────────────
   const filters: ProblemFilters = {
     page,
     page_size: PAGE_SIZE,
@@ -86,7 +83,6 @@ export default function ProblemsPage() {
   const { data, isLoading, isError } = useProblems(filters);
   const { data: tags, isLoading: tagsLoading } = useTags();
 
-  // ── Tag toggle ──────────────────────────────────────────────────
   function toggleTag(slug: string) {
     setSelectedTags((prev) =>
       prev.includes(slug) ? prev.filter((t) => t !== slug) : [...prev, slug],
@@ -97,10 +93,8 @@ export default function ProblemsPage() {
   const activeFilterCount =
     selectedTags.length + (minRating ? 1 : 0) + (maxRating ? 1 : 0) + (excludeSolved ? 1 : 0);
 
-  // ── Render ──────────────────────────────────────────────────────
   return (
     <div className="space-y-6 p-4 lg:p-6">
-      {/* Header */}
       <div>
         <h1 className="text-xl font-semibold text-foreground">Problems</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -108,7 +102,6 @@ export default function ProblemsPage() {
         </p>
       </div>
 
-      {/* Search & Filter Toggle */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -138,10 +131,8 @@ export default function ProblemsPage() {
         </button>
       </div>
 
-      {/* Filters Panel */}
       {showFilters && (
         <div className="rounded-xl border border-border bg-card p-5 space-y-5">
-          {/* Tags */}
           <div>
             <h3 className="mb-2 text-sm font-medium text-foreground">Tags</h3>
             {tagsLoading ? (
@@ -167,7 +158,6 @@ export default function ProblemsPage() {
             )}
           </div>
 
-          {/* Rating Range */}
           <div>
             <h3 className="mb-2 text-sm font-medium text-foreground">Rating Range</h3>
             <div className="flex items-center gap-3">
@@ -199,7 +189,6 @@ export default function ProblemsPage() {
             </div>
           </div>
 
-          {/* Sort & Options */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
             <div>
               <h3 className="mb-2 text-sm font-medium text-foreground">Sort By</h3>
@@ -244,7 +233,6 @@ export default function ProblemsPage() {
             </label>
           </div>
 
-          {/* Clear Filters */}
           {activeFilterCount > 0 && (
             <button
               onClick={() => {
@@ -263,7 +251,6 @@ export default function ProblemsPage() {
         </div>
       )}
 
-      {/* Problem List */}
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -276,7 +263,6 @@ export default function ProblemsPage() {
         </div>
       ) : data && data.problems.length > 0 ? (
         <>
-          {/* Results count */}
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
               Showing{' '}
@@ -289,7 +275,6 @@ export default function ProblemsPage() {
             </p>
           </div>
 
-          {/* Table */}
           <div className="rounded-xl border border-border bg-card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
@@ -322,7 +307,6 @@ export default function ProblemsPage() {
                       className="transition-colors hover:bg-accent/50 cursor-pointer"
                       onClick={() => navigate(`/app/problems/${problem.id}`)}
                     >
-                      {/* Problem ID */}
                       <td className="whitespace-nowrap px-6 py-4">
                         <span
                           className="text-sm font-medium text-foreground"
@@ -332,7 +316,6 @@ export default function ProblemsPage() {
                         </span>
                       </td>
 
-                      {/* Name */}
                       <td className="px-6 py-4">
                         <span className="font-medium text-foreground hover:text-primary transition-colors">
                           {problem.name}
@@ -344,7 +327,6 @@ export default function ProblemsPage() {
                         )}
                       </td>
 
-                      {/* Rating */}
                       <td className="whitespace-nowrap px-6 py-4">
                         {problem.rating ? (
                           <span
@@ -358,7 +340,6 @@ export default function ProblemsPage() {
                         )}
                       </td>
 
-                      {/* Tags */}
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap gap-1">
                           {problem.tags.slice(0, 3).map((tag) => (
@@ -385,12 +366,10 @@ export default function ProblemsPage() {
                         </div>
                       </td>
 
-                      {/* Solved Count */}
                       <td className="whitespace-nowrap px-6 py-4 text-right text-sm text-muted-foreground">
                         {problem.solved_count.toLocaleString()}
                       </td>
 
-                      {/* External Link */}
                       <td className="whitespace-nowrap px-6 py-4">
                         <a
                           href={problem.url}
@@ -410,7 +389,6 @@ export default function ProblemsPage() {
             </div>
           </div>
 
-          {/* Pagination */}
           {data.total_pages > 1 && (
             <div className="flex items-center justify-between">
               <button

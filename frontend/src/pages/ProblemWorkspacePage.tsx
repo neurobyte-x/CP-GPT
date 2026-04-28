@@ -49,31 +49,24 @@ export default function ProblemWorkspacePage() {
   const { data: problem, isLoading, isError } = useProblem(problemId);
   const coaching = useCoaching();
 
-  // Timer state
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Notes state
   const [notes, setNotes] = useState('');
 
-  // Status
   const [status, setStatus] = useState<'unsolved' | 'attempting' | 'solved'>('unsolved');
 
-  // Coach panel
   const [showCoach, setShowCoach] = useState(false);
   const [coachInput, setCoachInput] = useState('');
   const [coachMessages, setCoachMessages] = useState<CoachMessage[]>([]);
   const [hintLevel, setHintLevel] = useState(1);
   const coachEndRef = useRef<HTMLDivElement>(null);
 
-  // Tabs
   const [activeTab, setActiveTab] = useState<'statement' | 'notes' | 'editorial'>('statement');
 
-  // Editorial reveal
   const [editorialRevealed, setEditorialRevealed] = useState(false);
 
-  // Timer logic
   useEffect(() => {
     if (timerRunning) {
       timerRef.current = setInterval(() => {
@@ -88,7 +81,6 @@ export default function ProblemWorkspacePage() {
     };
   }, [timerRunning]);
 
-  // Auto-scroll coach panel
   useEffect(() => {
     coachEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [coachMessages]);
@@ -103,7 +95,6 @@ export default function ProblemWorkspacePage() {
     async (action: CoachingRequest['action'], userContext?: string) => {
       if (!problem) return;
 
-      // Add user message if there's context
       if (userContext) {
         setCoachMessages((prev) => [
           ...prev,
@@ -179,7 +170,6 @@ export default function ProblemWorkspacePage() {
     setCoachInput('');
   };
 
-  // ── Loading / Error states ──────────────────────────────────────
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -208,7 +198,6 @@ export default function ProblemWorkspacePage() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Problem Header */}
       <div className="px-4 lg:px-6 py-3 border-b border-border/50 shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 min-w-0">
@@ -246,7 +235,6 @@ export default function ProblemWorkspacePage() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            {/* Timer */}
             <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-secondary border border-border rounded-lg">
               <Timer className="w-4 h-4 text-muted-foreground" />
               <span
@@ -272,7 +260,6 @@ export default function ProblemWorkspacePage() {
               </button>
             </div>
 
-            {/* Status */}
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as 'unsolved' | 'attempting' | 'solved')}
@@ -319,11 +306,8 @@ export default function ProblemWorkspacePage() {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Problem Content */}
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Tabs */}
           <div className="flex border-b border-border/50 px-4 lg:px-6 shrink-0">
             {[
               { key: 'statement' as const, label: 'Problem', icon: FileText },
@@ -348,7 +332,6 @@ export default function ProblemWorkspacePage() {
           <div className="flex-1 overflow-y-auto p-4 lg:p-6">
             {activeTab === 'statement' && (
               <div className="max-w-3xl space-y-6">
-                {/* Metadata */}
                 <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5" />
@@ -366,7 +349,6 @@ export default function ProblemWorkspacePage() {
                   )}
                 </div>
 
-                {/* Problem info card */}
                 <div className="bg-secondary/30 border border-border/50 rounded-lg p-4 space-y-3">
                   <p className="text-sm text-foreground/90" style={{ lineHeight: 1.8 }}>
                     This problem is from{' '}
@@ -395,7 +377,6 @@ export default function ProblemWorkspacePage() {
                   </div>
                 </div>
 
-                {/* Link to Codeforces for full statement */}
                 <div className="bg-secondary/30 border border-border/50 rounded-lg p-6 flex items-center gap-4">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                     <ExternalLink className="w-5 h-5 text-primary" />
@@ -479,7 +460,6 @@ export default function ProblemWorkspacePage() {
           </div>
         </div>
 
-        {/* Dockable Coach Panel */}
         {showCoach && (
           <div className="w-[360px] border-l border-border/50 bg-card/50 flex flex-col shrink-0">
             <div className="px-4 py-3 border-b border-border/50 flex items-center justify-between shrink-0">
@@ -495,7 +475,6 @@ export default function ProblemWorkspacePage() {
               </button>
             </div>
 
-            {/* Quick Actions */}
             <div className="px-4 py-3 border-b border-border/50 flex flex-wrap gap-1.5 shrink-0">
               {[
                 { label: 'Hint', action: 'hint' as const },

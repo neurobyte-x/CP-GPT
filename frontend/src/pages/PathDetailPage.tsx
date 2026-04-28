@@ -1,8 +1,3 @@
-/**
- * PathDetailPage — detailed view of a practice path (dark theme).
- * Shows path header with progress, problem timeline, and inline coaching.
- */
-
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
@@ -26,8 +21,6 @@ import { cn } from '@/lib/utils';
 
 import { usePath, useMarkSolved, useSkipProblem, useCoaching } from '@/hooks/useApi';
 import type { PathProblem, CoachingRequest, CoachingResponse } from '@/types';
-
-// ── Helpers ─────────────────────────────────────────────────────
 
 function ratingColor(r: number | null): string {
   if (r === null) return 'text-gray-400';
@@ -91,8 +84,6 @@ const COACHING_ACTIONS: { value: CoachingAction; label: string }[] = [
   { value: 'pitfalls', label: 'Pitfalls' },
 ];
 
-// ── Coaching Panel Sub-Component ────────────────────────────────
-
 function CoachingPanel({ problemId }: { problemId: number }) {
   const coaching = useCoaching();
   const [hintLevel, setHintLevel] = useState(1);
@@ -141,7 +132,6 @@ function CoachingPanel({ problemId }: { problemId: number }) {
         AI Coach
       </div>
 
-      {/* Action buttons */}
       <div className="flex flex-wrap gap-2">
         {COACHING_ACTIONS.map((act) => (
           <button
@@ -160,7 +150,6 @@ function CoachingPanel({ problemId }: { problemId: number }) {
         ))}
       </div>
 
-      {/* Hint level selector */}
       <div className="flex items-center gap-3">
         <label className="text-xs font-medium text-muted-foreground">Hint Level:</label>
         <div className="flex gap-1">
@@ -181,7 +170,6 @@ function CoachingPanel({ problemId }: { problemId: number }) {
         </div>
       </div>
 
-      {/* Context input */}
       <textarea
         value={context}
         onChange={(e) => setContext(e.target.value)}
@@ -190,7 +178,6 @@ function CoachingPanel({ problemId }: { problemId: number }) {
         className="w-full rounded-lg border border-border bg-input-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary/20 resize-none"
       />
 
-      {/* Response area */}
       {response && (
         <div className="space-y-3 rounded-lg border border-border/50 bg-card p-4">
           {response.warning && (
@@ -202,7 +189,6 @@ function CoachingPanel({ problemId }: { problemId: number }) {
             <ReactMarkdown>{response.response}</ReactMarkdown>
           </div>
 
-          {/* Follow-up suggestions */}
           {response.follow_up_suggestions.length > 0 && (
             <div className="border-t border-border/50 pt-3">
               <p className="mb-2 text-xs font-medium text-muted-foreground">Follow-up questions:</p>
@@ -226,16 +212,12 @@ function CoachingPanel({ problemId }: { problemId: number }) {
   );
 }
 
-// ── Main Component ──────────────────────────────────────────────
-
 export default function PathDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { data: path, isLoading, isError } = usePath(id ?? '');
   const markSolved = useMarkSolved();
   const skipProblem = useSkipProblem();
   const [expandedCoaching, setExpandedCoaching] = useState<number | null>(null);
-
-  // ── Actions ─────────────────────────────────────────────────────
 
   async function handleMarkSolved(problemId: number) {
     if (!id) return;
@@ -256,8 +238,6 @@ export default function PathDetailPage() {
       toast.error('Failed to skip problem.');
     }
   }
-
-  // ── Loading / Error ─────────────────────────────────────────────
 
   if (isLoading) {
     return (
@@ -290,14 +270,12 @@ export default function PathDetailPage() {
   const sb = statusBadge(path.status);
   const mb = modeBadge(path.mode);
 
-  // Find resume index
   const resumeIdx = path.problems.findIndex(
     (p) => p.status === 'attempted' || p.status === 'unlocked',
   );
 
   return (
     <div className="p-4 lg:p-6 max-w-[1100px] mx-auto space-y-6">
-      {/* ── Back link ──────────────────────────────────────────── */}
       <Link
         to="/app/practice"
         className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
@@ -306,7 +284,6 @@ export default function PathDetailPage() {
         Back to Paths
       </Link>
 
-      {/* ── Path Header ────────────────────────────────────────── */}
       <div className="bg-card border border-border rounded-xl p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex-1">
@@ -356,7 +333,6 @@ export default function PathDetailPage() {
             </div>
           </div>
 
-          {/* Progress summary */}
           <div className="w-full sm:w-48">
             <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
               <span>Progress</span>
@@ -380,7 +356,6 @@ export default function PathDetailPage() {
         </div>
       </div>
 
-      {/* ── Problem Timeline ───────────────────────────────────── */}
       <div>
         <h2 className="mb-4 text-lg font-semibold text-foreground">Problems</h2>
 
@@ -407,10 +382,8 @@ export default function PathDetailPage() {
                   )}
                 >
                   <div className="flex items-center gap-3">
-                    {/* Status icon */}
                     <StatusIcon className={`w-5 h-5 shrink-0 ${config.color}`} />
 
-                    {/* Problem info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-muted-foreground font-mono">#{pp.position}</span>
@@ -454,7 +427,6 @@ export default function PathDetailPage() {
                       )}
                     </div>
 
-                    {/* Right: rating + actions */}
                     <div className="flex items-center gap-3 shrink-0">
                       <span
                         className={`text-xs font-semibold font-mono ${ratingColor(pp.problem.rating)}`}
@@ -493,7 +465,6 @@ export default function PathDetailPage() {
                     </div>
                   </div>
 
-                  {/* Coaching toggle */}
                   {!isLocked && (
                     <div className="mt-2 ml-8">
                       <button

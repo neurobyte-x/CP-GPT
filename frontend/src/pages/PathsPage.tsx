@@ -1,8 +1,3 @@
-/**
- * PathsPage — Practice Paths list (dark theme).
- * Combines UI reference design with real backend data.
- */
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -24,8 +19,6 @@ import { cn } from '@/lib/utils';
 
 import { usePaths, useCreatePath, useTags } from '@/hooks/useApi';
 import type { CreatePathRequest, PracticePath } from '@/types';
-
-// ── Constants ───────────────────────────────────────────────────
 
 type StatusFilter = 'all' | 'active' | 'paused' | 'completed' | 'abandoned';
 
@@ -65,8 +58,6 @@ const INITIAL_FORM: CreatePathRequest = {
   problem_count: 20,
 };
 
-// ── Helpers ─────────────────────────────────────────────────────
-
 function statusBadge(status: PracticePath['status']) {
   switch (status) {
     case 'active':
@@ -91,8 +82,6 @@ function modeBadge(mode: PracticePath['mode']) {
   }
 }
 
-// ── Main Component ──────────────────────────────────────────────
-
 export default function PathsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [showCreate, setShowCreate] = useState(false);
@@ -103,8 +92,6 @@ export default function PathsPage() {
   );
   const { data: tags, isLoading: tagsLoading } = useTags();
   const createPath = useCreatePath();
-
-  // ── Form handlers ───────────────────────────────────────────────
 
   function toggleTopic(slug: string) {
     setForm((prev) => ({
@@ -139,14 +126,12 @@ export default function PathsPage() {
     }
   }
 
-  // Derive stats
   const totalPaths = paths?.length ?? 0;
   const totalSolved = paths?.reduce((acc, p) => acc + p.current_position, 0) ?? 0;
   const totalProblems = paths?.reduce((acc, p) => acc + p.total_problems, 0) ?? 0;
 
   return (
     <div className="p-4 lg:p-6 max-w-[1100px] mx-auto space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
@@ -166,7 +151,6 @@ export default function PathsPage() {
         </button>
       </div>
 
-      {/* Overall Stats */}
       <div className="grid grid-cols-3 gap-4">
         {[
           { icon: Trophy, label: 'Total Paths', value: String(totalPaths), color: 'text-neon-orange', bg: 'bg-neon-orange/10' },
@@ -185,7 +169,6 @@ export default function PathsPage() {
         ))}
       </div>
 
-      {/* ── Creation Form ──────────────────────────────────────── */}
       {showCreate && (
         <div className="bg-card border border-border rounded-xl p-6 space-y-6">
           <div className="flex items-center justify-between">
@@ -198,7 +181,6 @@ export default function PathsPage() {
             </button>
           </div>
 
-          {/* Name */}
           <div>
             <label className="mb-1.5 block text-sm font-medium text-foreground">Path Name</label>
             <input
@@ -210,7 +192,6 @@ export default function PathsPage() {
             />
           </div>
 
-          {/* Topics */}
           <div>
             <label className="mb-1.5 block text-sm font-medium text-foreground">
               Topics{' '}
@@ -244,7 +225,6 @@ export default function PathsPage() {
             )}
           </div>
 
-          {/* Rating Range */}
           <div>
             <label className="mb-1.5 block text-sm font-medium text-foreground">Rating Range</label>
             <div className="flex items-center gap-4">
@@ -280,7 +260,6 @@ export default function PathsPage() {
             </div>
           </div>
 
-          {/* Mode Selection */}
           <div>
             <label className="mb-2 block text-sm font-medium text-foreground">Mode</label>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -309,7 +288,6 @@ export default function PathsPage() {
             </div>
           </div>
 
-          {/* Forced Mode Toggle */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => setForm((prev) => ({ ...prev, forced_mode: !prev.forced_mode }))}
@@ -336,7 +314,6 @@ export default function PathsPage() {
             </div>
           </div>
 
-          {/* Problem Count */}
           <div>
             <label className="mb-1.5 block text-sm font-medium text-foreground">
               Problem Count: {form.problem_count}
@@ -358,7 +335,6 @@ export default function PathsPage() {
             </div>
           </div>
 
-          {/* Submit */}
           <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
             <button
               onClick={() => setShowCreate(false)}
@@ -387,7 +363,6 @@ export default function PathsPage() {
         </div>
       )}
 
-      {/* ── Filter Tabs ────────────────────────────────────────── */}
       <div className="flex gap-1 overflow-x-auto rounded-lg border border-border bg-card p-1">
         {STATUS_TABS.map((tab) => (
           <button
@@ -405,7 +380,6 @@ export default function PathsPage() {
         ))}
       </div>
 
-      {/* ── Path List ──────────────────────────────────────────── */}
       {isLoading ? (
         <div className="flex items-center justify-center py-16">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -449,7 +423,6 @@ export default function PathsPage() {
                         )}
                       </div>
 
-                      {/* Topics */}
                       {path.topics.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1.5">
                           {path.topics.slice(0, 5).map((topic) => (

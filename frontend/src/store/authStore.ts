@@ -1,8 +1,3 @@
-/**
- * Global auth state management with Zustand.
- * Adapted for FastAPI-Users (no refresh tokens).
- */
-
 import { create } from 'zustand';
 import type { User } from '@/types';
 import { api } from '@/services/api';
@@ -13,7 +8,6 @@ interface AuthState {
   isLoading: boolean;
   error: string | null;
 
-  // Actions
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, username: string, password: string, cfHandle?: string) => Promise<void>;
   logout: () => void;
@@ -47,7 +41,6 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       await api.register({ email, username, password, cf_handle: cfHandle });
-      // Auto-login after registration
       await api.login({ email, password });
       const user = await api.getMe();
       set({ user, isAuthenticated: true, isLoading: false });

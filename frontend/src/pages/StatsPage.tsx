@@ -1,8 +1,3 @@
-/**
- * Analytics page — detailed view of user progress, topic mastery, and activity.
- * Wired to real data via useDashboard(), useTopicStats(), usePaths().
- */
-
 import {
   BarChart3,
   TrendingUp,
@@ -33,7 +28,6 @@ import {
 
 import { useDashboard, useTopicStats, usePaths } from '@/hooks/useApi';
 
-// Rating bucket → bar color
 const RATING_COLORS: Record<string, string> = {
   '800': '#6b7280',
   '900': '#6b7280',
@@ -56,11 +50,9 @@ const RATING_COLORS: Record<string, string> = {
 };
 
 function getRatingBarColor(bucket: string): string {
-  // bucket is like "800", "1000", "1200", etc.
   return RATING_COLORS[bucket] || '#6366f1';
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
@@ -93,15 +85,12 @@ export default function StatsPage() {
     );
   }
 
-  // ── Derived data ──────────────────────────────────────────────
-
   const totalSolved = dashboard?.total_problems_solved ?? 0;
   const totalAttempted = dashboard?.total_problems_attempted ?? 0;
   const accuracy = totalAttempted > 0 ? Math.round((totalSolved / totalAttempted) * 100) : 0;
   const estimatedRating = dashboard?.estimated_rating ?? null;
   const streakDays = dashboard?.current_streak_days ?? 0;
 
-  // Rating distribution chart data
   const ratingData = dashboard
     ? Object.entries(dashboard.rating_distribution)
         .map(([bucket, count]) => ({
@@ -112,13 +101,11 @@ export default function StatsPage() {
         .sort((a, b) => Number(a.range) - Number(b.range))
     : [];
 
-  // Topic radar data (top 8)
   const radarData = (topicStats ?? []).slice(0, 8).map((ts) => ({
     topic: ts.tag_name.length > 12 ? ts.tag_name.slice(0, 12) + '...' : ts.tag_name,
     score: Math.max(0, Math.min(100, Math.round(((ts.estimated_skill - 800) / 1600) * 100))),
   }));
 
-  // Weak areas: topics sorted by accuracy (lowest first)
   const weakAreas = (topicStats ?? [])
     .filter((ts) => ts.problems_attempted > 0)
     .map((ts) => ({
@@ -132,7 +119,6 @@ export default function StatsPage() {
     .sort((a, b) => a.accuracy - b.accuracy)
     .slice(0, 5);
 
-  // Path completion data
   const activePaths = (paths ?? [])
     .filter((p) => p.status === 'active' || p.status === 'completed')
     .slice(0, 5);
@@ -144,12 +130,10 @@ export default function StatsPage() {
       ? Math.round(activePaths.reduce((sum, p) => sum + p.progress_pct, 0) / activePaths.length)
       : 0;
 
-  // Recent solves for trend placeholder
   const recentSolves = dashboard?.recent_solves ?? [];
 
   return (
     <div className="p-4 lg:p-6 max-w-[1400px] mx-auto space-y-6">
-      {/* Header */}
       <div>
         <div className="flex items-center gap-2 mb-1">
           <BarChart3 className="w-5 h-5 text-primary" />
@@ -160,7 +144,6 @@ export default function StatsPage() {
         </p>
       </div>
 
-      {/* Summary Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           {
@@ -209,9 +192,7 @@ export default function StatsPage() {
         ))}
       </div>
 
-      {/* Charts Row 1 */}
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Rating Distribution */}
         <div className="bg-card border border-border rounded-xl p-4">
           <div className="mb-4">
             <h3 className="text-sm font-semibold">Rating Distribution</h3>
@@ -247,7 +228,6 @@ export default function StatsPage() {
           )}
         </div>
 
-        {/* Recent Activity Trend */}
         <div className="bg-card border border-border rounded-xl p-4">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -308,9 +288,7 @@ export default function StatsPage() {
         </div>
       </div>
 
-      {/* Charts Row 2 */}
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Topic Radar */}
         <div className="bg-card border border-border rounded-xl p-4">
           <div className="mb-4">
             <h3 className="text-sm font-semibold">Topic Performance</h3>
@@ -346,7 +324,6 @@ export default function StatsPage() {
           )}
         </div>
 
-        {/* Weak Areas */}
         <div className="bg-card border border-border rounded-xl p-4 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
@@ -394,9 +371,7 @@ export default function StatsPage() {
         </div>
       </div>
 
-      {/* Bottom Row */}
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Topic Breakdown Table */}
         <div className="bg-card border border-border rounded-xl p-4">
           <div className="mb-4">
             <h3 className="text-sm font-semibold">Topic Breakdown</h3>
@@ -448,7 +423,6 @@ export default function StatsPage() {
           )}
         </div>
 
-        {/* Path Completion */}
         <div className="bg-card border border-border rounded-xl p-4">
           <div className="mb-4">
             <h3 className="text-sm font-semibold">Path Completion</h3>

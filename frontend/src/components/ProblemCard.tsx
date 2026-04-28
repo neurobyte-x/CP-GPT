@@ -1,9 +1,3 @@
-/**
- * ProblemCard — compact inline card for Codeforces problems (dark theme).
- * Used inside chat messages when the AI returns problem recommendations.
- * Includes a "Copy URL" button for quick sharing.
- */
-
 import { ExternalLink, Copy, Check } from 'lucide-react';
 import { useState } from 'react';
 import type { ChatProblem } from '@/types';

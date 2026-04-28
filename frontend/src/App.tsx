@@ -1,21 +1,3 @@
-/**
- * Application shell — routing, auth guards, providers.
- *
- * Routing structure (matches UI reference):
- *   /                → LandingPage (no layout)
- *   /login           → LoginPage (public-only)
- *   /register        → RegisterPage (public-only)
- *   /app             → AppLayout shell (auth-guarded)
- *     /app           → Dashboard (index)
- *     /app/coach     → AI Coach (chat)
- *     /app/practice  → Practice Paths list
- *     /app/practice/:id → Path detail
- *     /app/problems  → Problems browser
- *     /app/problem/:id → Problem workspace
- *     /app/analytics → Analytics / stats
- *     /app/profile   → Profile settings
- */
-
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -23,7 +5,6 @@ import { Toaster } from '@/components/ui/sonner';
 import { useAuthStore } from '@/store/authStore';
 import AppLayout from '@/components/AppLayout';
 
-// Pages
 import LandingPage from '@/pages/LandingPage';
 import LoginPage from '@/pages/LoginPage';
 import RegisterPage from '@/pages/RegisterPage';
@@ -46,7 +27,6 @@ const queryClient = new QueryClient({
   },
 });
 
-/** Redirect authenticated users away from public-only pages */
 function PublicOnly({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   if (isAuthenticated) {
@@ -55,7 +35,6 @@ function PublicOnly({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-/** Auth guard — loads user, shows spinner, or redirects to /login */
 function AuthGuard() {
   const { isAuthenticated, isLoading, loadUser } = useAuthStore();
 
@@ -75,7 +54,6 @@ function AuthGuard() {
     return <Navigate to="/login" replace />;
   }
 
-  // Render AppLayout which contains <Outlet /> for child routes
   return <AppLayout />;
 }
 
@@ -84,7 +62,6 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
-          {/* Public routes */}
           <Route path="/" element={<LandingPage />} />
           <Route
             path="/login"
@@ -103,7 +80,6 @@ export default function App() {
             }
           />
 
-          {/* Authenticated routes — all under /app with AppLayout shell */}
           <Route path="/app" element={<AuthGuard />}>
             <Route index element={<DashboardPage />} />
             <Route path="coach" element={<ChatPage />} />
@@ -115,7 +91,6 @@ export default function App() {
             <Route path="profile" element={<ProfilePage />} />
           </Route>
 
-          {/* Legacy redirects — old routes → new /app/* routes */}
           <Route path="/dashboard" element={<Navigate to="/app" replace />} />
           <Route path="/chat" element={<Navigate to="/app/coach" replace />} />
           <Route path="/coaching" element={<Navigate to="/app/coach" replace />} />
@@ -125,7 +100,6 @@ export default function App() {
           <Route path="/stats" element={<Navigate to="/app/analytics" replace />} />
           <Route path="/profile" element={<Navigate to="/app/profile" replace />} />
 
-          {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

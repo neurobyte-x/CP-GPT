@@ -1,5 +1,3 @@
-// ── Core domain types matching backend schemas ──────────────────
-
 export interface User {
   id: string;
   email: string;
@@ -132,8 +130,6 @@ export interface CoachingResponse {
   warning: string | null;
 }
 
-// ── Request types ───────────────────────────────────────────────
-
 export interface LoginRequest {
   email: string;
   password: string;
@@ -146,7 +142,6 @@ export interface RegisterRequest {
   cf_handle?: string;
 }
 
-/** FastAPI-Users returns only access_token (no refresh token) */
 export interface TokenResponse {
   access_token: string;
   token_type: string;
@@ -174,8 +169,6 @@ export interface ProblemFilters {
   sort_order?: 'asc' | 'desc';
 }
 
-// ── Chat types ─────────────────────────────────────────────────
-
 export interface Conversation {
   id: string;
   title: string;
@@ -197,7 +190,6 @@ export interface ChatMessage {
   created_at: string;
 }
 
-/** Lightweight problem shape returned in chat metadata */
 export interface ChatProblem {
   id: number;
   contest_id: number;
@@ -222,8 +214,6 @@ export interface ChatResponse {
   user_message: ChatMessage;
   assistant_message: ChatMessage;
 }
-
-// ── Utility types ───────────────────────────────────────────────
 
 export function getRatingColor(rating: number | null): string {
   if (rating === null) return 'text-gray-500';
